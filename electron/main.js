@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
+import { createAiProgressReporter, translateBatchesWithProgress } from './ai.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -95,5 +96,44 @@ ipcMain.handle('open-dll', async () => {
   } catch (err) {
     console.error(err)
     return { success: false, error: err.message }
+  }
+})
+
+ipcMain.handle('translate-ai', async (event, { strings, apiKey, model, endpointUrl }) => {
+  if (!strings || strings.length === 0) return { success: false, error: 'Нет текста для перевода.' };
+  if (!apiKey) return { success: false, error: 'Необходим API Ключ.' };
+
+  const total = strings.length;
+  const activeModel = model || 'gpt-4o-mini';
+  const activeEndpoint = endpointUrl || 'https://models.github.ai/inference/chat/completions';
+  const progressReporter = createAiProgressReporter(event.sender, {
+    model: activeModel,
+    endpointUrl: activeEndpoint,
+    total,
+  });
+
+  progressReporter.start();
+
+  try {
+    const result = await translateBatchesWithProgress(
+      strings,
+      apiKey,
+      activeModel,
+      activeEndpoint,
+      (payload) => {
+        progressReporter.progress(payload);
+      }
+    );
+
+    if (result.success) {
+      progressReporter.done();
+    } else {
+      progressReporter.error(result.error);
+    }
+
+    return result;
+  } catch (err) {
+    progressReporter.error(err.message);
+    return { success: false, error: err.message };
   }
 })

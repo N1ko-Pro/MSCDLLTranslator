@@ -1,0 +1,16 @@
+export const AI_MODAL_COPY = {
+  alertTitle: 'Нужны настройки AI',
+  alertBody: 'Чтобы запустить автоматический перевод, укажите API ключ и endpoint GitHub Models.',
+  settingsTitle: 'Настройки приложения',
+  settingsSubtitle: 'Конфигурация GitHub Models',
+  endpointLabel: 'Endpoint URL GitHub Models',
+  endpointHint: 'Ожидаемый URL:',
+  apiKeyLabel: 'API Ключ',
+  modelLabel: 'Доступная модель',
+  modelHint: 'Вы можете выбрать доступную модель из списка.',
+  modelFallbackHint: 'Поле выбора модели появится после ввода корректного GitHub Models endpoint и API ключа.',
+  closeButton: 'Закрыть',
+  settingsButton: 'В настройки',
+  cancelButton: 'Отмена',
+  saveButton: 'Сохранить',
+};
