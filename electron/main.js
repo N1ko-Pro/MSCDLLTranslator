@@ -1,10 +1,10 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
-import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { createAiProgressReporter, translateBatchesWithProgress } from './ai.js'
+import { getProjects, loadProject, saveProject, deleteProject } from './projectManager.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -109,7 +109,8 @@ ipcMain.handle('open-dll', async () => {
           version: version || 'Unknown',
           description: description || 'Unknown'
         },
-        strings: parsedStrings
+        strings: parsedStrings,
+        filePath
       }
     }
   } catch (err) {
@@ -117,6 +118,11 @@ ipcMain.handle('open-dll', async () => {
     return { success: false, error: err.message }
   }
 })
+
+ipcMain.handle('get-projects', async () => await getProjects())
+ipcMain.handle('load-project', async (_, id) => await loadProject(id))
+ipcMain.handle('save-project', async (_, data) => await saveProject(data))
+ipcMain.handle('delete-project', async (_, id) => await deleteProject(id))
 
 ipcMain.handle('translate-ai', async (event, { strings, apiKey, model, endpointUrl }) => {
   if (!strings || strings.length === 0) return { success: false, error: 'Нет текста для перевода.' };

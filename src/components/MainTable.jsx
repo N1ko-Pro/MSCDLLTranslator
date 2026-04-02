@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Sparkles, FolderOpen, X, AlertCircle, Settings, Check, Trash2, Search } from 'lucide-react';
+import { Sparkles, X, AlertCircle, Settings, Check, Trash2, Search } from 'lucide-react';
 import Topbar from './Topbar';
 import TranslationStatusBar from './TranslationStatusBar';
 import AiAlertModal from './AiAlertModal';
 import AiSettingsModal from './AiSettingsModal';
 import useAiTranslation from '../hooks/useAiTranslation';
 
-export default function MainTable({ disabled, originalStrings, translations, setTranslations, onOpenDLL }) {
+export default function MainTable({ disabled, originalStrings, translations, setTranslations }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const {
@@ -69,14 +69,10 @@ export default function MainTable({ disabled, originalStrings, translations, set
   return (
     <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-[#0f0f13]">
       <Topbar
-        translatedCount={translatedCount}
-        totalCount={totalCount}
-        onOpenDLL={onOpenDLL}
+
         onAIOpen={triggerAITranslation}
         disableAI={disabled || !originalStrings.length}
         onSettingsOpen={() => setIsSettingsOpen(true)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
       />
 
       <AiAlertModal
@@ -122,18 +118,12 @@ export default function MainTable({ disabled, originalStrings, translations, set
         {disabled ? (
           <div className="flex-1 flex flex-col items-center justify-center pt-10">
             <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(255,255,255,0.02)] border border-white/10">
-              <FolderOpen className="w-10 h-10 text-zinc-600" />
+              <AlertCircle className="w-10 h-10 text-zinc-600" />
             </div>
-            <h2 className="text-xl font-bold text-zinc-300 mb-3">Мод не выбран</h2>
+            <h2 className="text-xl font-bold text-zinc-300 mb-3">В проекте нет строк для перевода</h2>
             <p className="text-zinc-500 text-sm max-w-sm text-center mb-6 leading-relaxed">
-              Нажмите кнопку «Выбрать DLL» в верхней правой панели, чтобы извлечь текст модификации и начать его перевод.
+              Этот файл DLL не содержит распознанных строк, доступных для перевода.
             </p>
-            <button
-              onClick={onOpenDLL}
-              className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/80 transition-all active:scale-95 shadow-[0_0_15px_rgba(99,102,241,0.3)]"
-            >
-              Выбрать файл
-            </button>
           </div>
         ) : (
           <div className="max-w-6xl mx-auto w-full h-full flex flex-col min-h-0">

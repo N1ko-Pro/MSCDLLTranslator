@@ -17,8 +17,8 @@ export default function Sidebar({ disabled, modData, translations, setTranslatio
             <Settings className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col justify-center">
-            <h1 className="text-[16px] font-bold text-zinc-100 leading-tight tracking-tight">MSC DLL</h1>
-            <p className="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">Translator v4.0</p>
+            <h1 className="text-[16px] font-bold text-zinc-100 leading-tight tracking-tight">MSC DLL Launcher</h1>
+            <p className="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">v4.0</p>
           </div>
         </div>
       </div>
