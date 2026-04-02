@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  minimizeWindow: () => ipcRenderer.send('window-minimize'),
+  maximizeWindow: () => ipcRenderer.send('window-maximize'),
+  closeWindow: () => ipcRenderer.send('window-close'),
   openDll: () => ipcRenderer.invoke('open-dll'),
   saveDll: (data) => ipcRenderer.invoke('save-dll', data),
   translateAI: (data) => ipcRenderer.invoke('translate-ai', data),

@@ -22,6 +22,7 @@ function createWindow() {
     height: 1220,
     minWidth: 900,
     minHeight: 700,
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       sandbox: false
@@ -45,6 +46,24 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(createWindow)
+
+ipcMain.on('window-minimize', () => {
+  if (win) win.minimize()
+})
+
+ipcMain.on('window-maximize', () => {
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win.maximize()
+    }
+  }
+})
+
+ipcMain.on('window-close', () => {
+  if (win) win.close()
+})
 
 ipcMain.handle('open-dll', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({

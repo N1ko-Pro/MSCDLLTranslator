@@ -1,5 +1,5 @@
-import React from 'react';
-import { Sparkles, FolderOpen, X, AlertCircle, Settings, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, FolderOpen, X, AlertCircle, Settings, Check, Trash2, Search } from 'lucide-react';
 import Topbar from './Topbar';
 import TranslationStatusBar from './TranslationStatusBar';
 import AiAlertModal from './AiAlertModal';
@@ -7,6 +7,8 @@ import AiSettingsModal from './AiSettingsModal';
 import useAiTranslation from '../hooks/useAiTranslation';
 
 export default function MainTable({ disabled, originalStrings, translations, setTranslations, onOpenDLL }) {
+  const [searchQuery, setSearchQuery] = useState('');
+
   const {
     aiError,
     apiKey,
@@ -40,6 +42,20 @@ export default function MainTable({ disabled, originalStrings, translations, set
     });
   };
 
+  const handleClearTranslation = (rowId) => {
+    const newTranslations = { ...translations };
+    delete newTranslations[rowId];
+    setTranslations(newTranslations);
+  };
+
+  const filteredStrings = originalStrings.filter(row => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const origMatch = row.original?.toLowerCase().includes(q);
+    const transMatch = translations[row.id]?.toLowerCase().includes(q);
+    return origMatch || transMatch;
+  });
+
   return (
     <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-[#0f0f13]">
       <Topbar
@@ -49,6 +65,8 @@ export default function MainTable({ disabled, originalStrings, translations, set
         onAIOpen={triggerAITranslation}
         disableAI={disabled || !originalStrings.length}
         onSettingsOpen={() => setIsSettingsOpen(true)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
 
       <AiAlertModal
@@ -90,7 +108,7 @@ export default function MainTable({ disabled, originalStrings, translations, set
         </div>
       )}
 
-      <div className="flex-1 min-h-0 overflow-hidden p-4 sm:p-8 scroll-smooth z-10 flex flex-col">
+        <div className="flex-1 min-h-0 overflow-hidden p-4 sm:p-8 scroll-smooth z-10 flex flex-col">
         {disabled ? (
           <div className="flex-1 flex flex-col items-center justify-center pt-10">
             <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(255,255,255,0.02)] border border-white/10">
@@ -109,35 +127,54 @@ export default function MainTable({ disabled, originalStrings, translations, set
           </div>
         ) : (
           <div className="max-w-6xl mx-auto w-full h-full flex flex-col min-h-0">
-            <div className="shrink-0 pt-2 pb-3">
-              <div className="grid grid-cols-[40px_1fr_1fr] gap-4 px-6 py-3 rounded-2xl border border-white/5 bg-[#111115]/82 backdrop-blur-[6px] shadow-[0_8px_24px_rgba(0,0,0,0.14)]">
-                <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest text-center">#</div>
-                <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Оригинальный текст из игры</div>
-                <div className="flex items-center justify-between gap-3 text-xs font-bold text-indigo-400/80 uppercase tracking-widest">
+            
+            <div className="flex items-center justify-between shrink-0 mb-4 px-1">
+              <div className="relative group w-full max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search className="w-4 h-4 text-zinc-500 group-focus-within:text-indigo-400 transition-colors" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Поиск по строкам (оригинал или перевод)..."
+                  value={searchQuery || ''}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#18181b]/50 border border-white/5 hover:border-white/10 focus:border-indigo-500/50 rounded-2xl py-3 pl-12 pr-4 text-[13px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
+                />
+              </div>
+            </div>
+
+            <div className="shrink-0 pb-3 z-20 relative pr-[14px]">
+              <div className="grid grid-cols-[40px_1fr_1fr] gap-4 px-6 py-3.5 rounded-2xl border border-indigo-500/20 bg-[#16161e]/90 backdrop-blur-md shadow-[0_8px_30px_rgba(79,70,229,0.08)]">
+                <div className="text-xs font-black text-indigo-400/50 uppercase tracking-widest text-center border-r border-indigo-500/10 pr-4">#</div>
+                <div className="text-xs font-black text-indigo-100 uppercase tracking-widest pl-1 border-r border-indigo-500/10 pr-4">Оригинальный текст из игры</div>
+                <div className="flex items-center justify-between gap-3 text-xs font-black text-indigo-300 uppercase tracking-widest pl-4">
                   <span>Ваш перевод</span>
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-500/50 shrink-0" />
+                  <div className="w-8 shrink-0 flex justify-center">
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-auto scroll-smooth pr-1 pb-20">
-              {originalStrings.map((row, index) => {
+            <div className="flex-1 min-h-0 overflow-auto scroll-smooth pr-2 pb-20 flex flex-col gap-1.5">
+              {filteredStrings.map((row) => {
                 const isTranslated = !!translations[row.id]?.trim();
+                const displayIndex = originalStrings.indexOf(row) + 1;
 
                 return (
                   <div
                     key={row.id}
                     className={`group grid grid-cols-[40px_1fr_1fr] gap-4 p-3 px-6 rounded-2xl items-center transition-all duration-300 ring-1 ring-inset ${
                       isTranslated
-                        ? 'bg-indigo-500/[0.02] ring-indigo-500/10 hover:bg-indigo-500/[0.04]'
-                        : 'bg-[#18181b]/40 ring-white/5 hover:bg-[#18181b]/80 hover:ring-white/10'
+                        ? 'bg-indigo-500/[0.02] ring-indigo-500/10 hover:bg-indigo-500/[0.04] focus-within:bg-indigo-500/[0.05] focus-within:ring-indigo-500/25'
+                        : 'bg-[#18181b]/30 ring-white/5 hover:bg-[#18181b]/70 hover:ring-white/10 focus-within:bg-[#18181b]/90 focus-within:ring-white/15 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.3)]'
                     }`}
                   >
-                    <div className="text-center font-mono text-[12px] font-semibold text-zinc-600 group-hover:text-indigo-400 transition-colors">
-                      {index + 1}
+                    <div className="text-center font-mono text-[12px] font-semibold text-zinc-600 group-hover:text-indigo-400 group-focus-within:text-indigo-400 transition-colors border-r border-white/5 pr-4 self-center">
+                      {displayIndex}
                     </div>
 
-                    <div className="text-[13px] text-zinc-300/90 leading-relaxed font-medium break-words select-text">
+                    <div className="text-[13px] text-zinc-300/90 leading-relaxed font-medium break-words select-text pl-4 border-r border-white/5 pr-4 self-center">
                       <span className="relative">
                         {row.original}
                         {!isTranslated && (
@@ -146,23 +183,27 @@ export default function MainTable({ disabled, originalStrings, translations, set
                       </span>
                     </div>
 
-                    <div className="relative">
-                      <input
-                        type="text"
-                        className={`w-full bg-[#09090b]/50 border rounded-xl px-4 py-2.5 text-[13px] font-medium transition-all duration-300 shadow-inner placeholder-zinc-600 ${
+                    <div className="relative flex items-center gap-3 pl-4">
+                      <textarea
+                        className={`flex-1 w-full resize-none overflow-hidden bg-[#09090b]/50 border rounded-xl px-4 py-2.5 text-[13px] font-medium transition-all duration-300 shadow-inner placeholder-zinc-600 ${
                           isTranslated
                             ? 'border-indigo-500/20 text-indigo-100 focus:border-indigo-500/60 hover:border-indigo-500/40 bg-indigo-950/10'
                             : 'border-white/5 text-zinc-200 focus:border-indigo-500/60 focus:bg-[#09090b] hover:border-white/10'
                         } focus:outline-none focus:ring-4 focus:ring-indigo-500/10`}
+                        style={{ fieldSizing: 'content', minHeight: '40px' }}
                         placeholder={isTranslated ? '' : 'Введите перевод для этой строки...'}
                         value={translations[row.id] || ''}
+                        rows={1}
                         onChange={(e) => handleTranslateChange(row.id, e.target.value)}
                       />
-                      {isTranslated && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded font-medium">
-                          Сохранено
-                        </div>
-                      )}
+                      
+                      <button
+                        onClick={() => handleClearTranslation(row.id)}
+                        title="Очистить перевод"
+                        className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-zinc-600 opacity-60 hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all focus:outline-none"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Sidebar from './components/Sidebar'
 import MainTable from './components/MainTable'
+import CustomTitlebar from './components/CustomTitlebar'
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -33,20 +34,23 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#0f0f13] overflow-hidden text-gray-200 antialiased font-sans">
-      <Sidebar 
-        disabled={!isLoaded} 
-        modData={modData} 
-        translations={modDataTranslations}
-        setTranslations={setModDataTranslations}
-      />
-      <MainTable 
-        disabled={!isLoaded}
-        originalStrings={originalStrings}
-        translations={translations}
-        setTranslations={setTranslations}
-        onOpenDLL={handleOpenDLL}
-      />
+    <div className="flex flex-col h-screen w-full bg-[#0f0f13] overflow-hidden text-gray-200 antialiased font-sans">
+      <CustomTitlebar />
+      <div className="flex flex-1 min-h-0">
+        <Sidebar 
+          disabled={!isLoaded} 
+          modData={modData} 
+          translations={modDataTranslations}
+          setTranslations={setModDataTranslations}
+        />
+        <MainTable 
+          disabled={!isLoaded}
+          originalStrings={originalStrings}
+          translations={translations}
+          setTranslations={setTranslations}
+          onOpenDLL={handleOpenDLL}
+        />
+      </div>
     </div>
   )
 }

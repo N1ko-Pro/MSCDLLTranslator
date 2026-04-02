@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DownloadCloud, FolderOpen, Bot, Settings } from 'lucide-react';
 
 export default function Topbar({ translatedCount, totalCount, onOpenDLL, onAIOpen, disableAI, onSettingsOpen }) {
@@ -53,10 +53,10 @@ export default function Topbar({ translatedCount, totalCount, onOpenDLL, onAIOpe
         
         <button 
           onClick={onSettingsOpen} 
-          className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors active:scale-95"
+          className="group p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors active:scale-95"
           title="Настройки"
         >
-          <Settings className="w-5 h-5 hover:rotate-90 transition-transform duration-500" />
+          <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
         </button>
       </div>
     </header>

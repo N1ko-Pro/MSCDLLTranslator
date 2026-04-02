@@ -21,9 +21,9 @@ export default function TranslationStatusBar({ visible, modelName, stage, eta, p
           <Bot className="w-4.5 h-4.5 text-fuchsia-400" />
         </div>
         <div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h4 className="text-sm font-bold text-fuchsia-100 leading-none">ИИ работает над переводом</h4>
-            <span className="inline-flex items-center rounded-full border border-fuchsia-400/20 bg-fuchsia-500/10 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-fuchsia-100 shadow-[0_0_18px_rgba(217,70,239,0.08)]">
+          <div className="flex items-center gap-3">
+            <h4 className="text-[13px] font-bold text-fuchsia-100 uppercase tracking-widest">ИИ работает над переводом</h4>
+            <span className="inline-flex items-center justify-center rounded-md border border-fuchsia-400/25 bg-fuchsia-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-fuchsia-100 shadow-sm">
               {modelLabel}
             </span>
           </div>

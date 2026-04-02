@@ -9,17 +9,17 @@
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    @apply bg-[#0f0f13];
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-zinc-700/50 rounded-full hover:bg-zinc-600/80 transition-colors;
-    border: 2px solid #0f0f13;
+    @apply bg-zinc-700/60 rounded-full hover:bg-zinc-500/80 transition-colors;
+    border: 3px solid #0f0f13;
   }
 }
 
