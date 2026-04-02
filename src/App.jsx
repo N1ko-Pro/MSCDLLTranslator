@@ -5,6 +5,9 @@ import CustomTitlebar from './components/CustomTitlebar'
 import HomeView from './components/HomeView'
 import EditProjectModal from './components/EditProjectModal'
 import CreateProjectModal from './components/CreateProjectModal'
+import NotificationContainer from './components/NotificationContainer'
+import { notify } from './utils/notifications'
+import { notificationMessages } from './constants/notificationStrings'
 
 function App() {
   const [projectsList, setProjectsList] = useState([]);
@@ -62,9 +65,14 @@ function App() {
     };
 
     if (window.electronAPI) {
-      const savedProj = await window.electronAPI.saveProject(newProjectData);
-      loadProjects();
-      openWorkspace(savedProj);
+      try {
+        const savedProj = await window.electronAPI.saveProject(newProjectData);
+        loadProjects();
+        openWorkspace(savedProj);
+        notify.success(...notificationMessages.project.created(projectName));
+      } catch (err) {
+        notify.error(...notificationMessages.project.createError);
+      }
     }
     setIsCreatingProject(false);
   };
@@ -72,18 +80,23 @@ function App() {
   const handleSaveProjectInfo = async ({ id, projectName, author }) => {
     if (!id) return;
     if (window.electronAPI) {
-      const existingProject = await window.electronAPI.loadProject(id);
-      if (existingProject) {
-        existingProject.projectName = projectName;
-        existingProject.author = author;
-        const ts = new Date().getTime();
-        existingProject.updatedAt = ts;
-        await window.electronAPI.saveProject(existingProject);
-        loadProjects();
+      try {
+        const existingProject = await window.electronAPI.loadProject(id);
+        if (existingProject) {
+          existingProject.projectName = projectName;
+          existingProject.author = author;
+          const ts = new Date().getTime();
+          existingProject.updatedAt = ts;
+          await window.electronAPI.saveProject(existingProject);
+          loadProjects();
 
-        if (currentProject && currentProject.id === id) {
-          setCurrentProject(prev => ({ ...prev, projectName, author, updatedAt: ts }));
+          if (currentProject && currentProject.id === id) {
+            setCurrentProject(prev => ({ ...prev, projectName, author, updatedAt: ts }));
+          }
+          notify.success(...notificationMessages.project.updated(projectName));
         }
+      } catch (err) {
+        notify.error(...notificationMessages.project.updateError);
       }
     }
     setEditingProject(null);
@@ -109,12 +122,17 @@ function App() {
 
   const handleDeleteProject = async (id) => {
     if (window.electronAPI) {
-      await window.electronAPI.deleteProject(id);
-      loadProjects();
+      try {
+        await window.electronAPI.deleteProject(id);
+        loadProjects();
+        notify.success(...notificationMessages.project.deleted);
+      } catch (err) {
+        notify.error(...notificationMessages.project.deleteError);
+      }
     }
   };
 
-  const saveWorkspace = async () => {
+  const saveWorkspace = async (isManual = false) => {
     if (!currentProject) return;
     const updatedProject = {
       ...currentProject,
@@ -124,15 +142,24 @@ function App() {
       }
     };
     if (window.electronAPI) {
-      const saved = await window.electronAPI.saveProject(updatedProject);
-      setCurrentProject(saved);
+      try {
+        const saved = await window.electronAPI.saveProject(updatedProject);
+        setCurrentProject(saved);
+        if (isManual) {
+          notify.success(...notificationMessages.project.saved, 2500);
+        }
+      } catch (err) {
+        if (isManual) {
+          notify.error(...notificationMessages.project.saveError);
+        }
+      }
     }
   };
 
   const debouncedSave = () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      saveWorkspace();
+      saveWorkspace(false);
     }, 1000);
   };
 
@@ -150,10 +177,10 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#0f0f13] overflow-hidden text-gray-200 antialiased font-sans">
-      <CustomTitlebar 
-        currentProject={currentProject} 
-        onSaveProject={saveWorkspace} 
-        onCloseProject={() => { setCurrentProject(null); loadProjects(); }}
+      <CustomTitlebar
+        currentProject={currentProject}
+        onSaveProject={() => saveWorkspace(true)}
+        onCloseProject={() => { setCurrentProject(null); loadProjects(); notify.info(...notificationMessages.project.closed); }}
       />
       <div className="flex flex-1 min-h-0 relative">
         {!currentProject ? (
@@ -197,6 +224,8 @@ function App() {
           onSave={handleSaveProjectInfo}
         />
       )}
+
+      <NotificationContainer />
     </div>
   )
 }
