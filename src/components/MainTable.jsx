@@ -56,6 +56,16 @@ export default function MainTable({ disabled, originalStrings, translations, set
     return origMatch || transMatch;
   });
 
+  const progress = totalCount > 0 ? Math.round((translatedCount / totalCount) * 100) : 0;
+
+  const getProgressGradient = (p) => {
+    if (p === 0) return 'from-zinc-700 to-zinc-600';
+    if (p < 30) return 'from-rose-500 to-red-500';
+    if (p < 60) return 'from-orange-500 to-amber-500';
+    if (p < 100) return 'from-lime-400 to-emerald-500';
+    return 'from-emerald-500 to-teal-500';
+  };
+
   return (
     <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-[#0f0f13]">
       <Topbar
@@ -128,29 +138,44 @@ export default function MainTable({ disabled, originalStrings, translations, set
         ) : (
           <div className="max-w-6xl mx-auto w-full h-full flex flex-col min-h-0">
             
-            <div className="flex items-center justify-between shrink-0 mb-4 px-1">
+            <div className="flex items-center justify-between shrink-0 mb-4 pl-1 pr-[14px] gap-6">
+              <div className="glass-panel px-4 py-2 rounded-xl flex items-center bg-[#18181b]/50">
+                <div className="flex flex-col gap-1 items-start">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Прогресс перевода</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-48 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-gradient-to-r ${getProgressGradient(progress)} rounded-full transition-all duration-500 ease-out`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-300">{translatedCount} / {totalCount}</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="relative group w-full max-w-md">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search className="w-4 h-4 text-zinc-500 group-focus-within:text-indigo-400 transition-colors" />
+                  <Search className="w-4 h-4 text-zinc-500 group-focus-within:text-violet-400 transition-colors" />
                 </div>
                 <input
                   type="text"
                   placeholder="Поиск по строкам (оригинал или перевод)..."
                   value={searchQuery || ''}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#18181b]/50 border border-white/5 hover:border-white/10 focus:border-indigo-500/50 rounded-2xl py-3 pl-12 pr-4 text-[13px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
+                  className="w-full bg-[#18181b]/50 border border-white/5 hover:border-white/10 focus:border-violet-500/40 rounded-2xl py-3 pl-12 pr-4 text-[13px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-4 focus:ring-violet-500/10 transition-all shadow-inner"
                 />
               </div>
             </div>
 
             <div className="shrink-0 pb-3 z-20 relative pr-[14px]">
-              <div className="grid grid-cols-[40px_1fr_1fr] gap-4 px-6 py-3.5 rounded-2xl border border-indigo-500/20 bg-[#16161e]/90 backdrop-blur-md shadow-[0_8px_30px_rgba(79,70,229,0.08)]">
-                <div className="text-xs font-black text-indigo-400/50 uppercase tracking-widest text-center border-r border-indigo-500/10 pr-4">#</div>
-                <div className="text-xs font-black text-indigo-100 uppercase tracking-widest pl-1 border-r border-indigo-500/10 pr-4">Оригинальный текст из игры</div>
-                <div className="flex items-center justify-between gap-3 text-xs font-black text-indigo-300 uppercase tracking-widest pl-4">
+              <div className="grid grid-cols-[40px_1fr_1fr] gap-4 px-6 py-3.5 rounded-2xl border border-white/5 bg-[#18181b]/80 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.15)]">
+                <div className="text-xs font-black text-violet-400/40 uppercase tracking-widest text-center border-r border-violet-500/10 pr-4">#</div>
+                <div className="text-xs font-black text-zinc-300 uppercase tracking-widest pl-1 border-r border-violet-500/10 pr-4">Оригинальный текст из игры</div>
+                <div className="flex items-center justify-between gap-3 text-xs font-black text-violet-300/80 uppercase tracking-widest pl-4">
                   <span>Ваш перевод</span>
                   <div className="w-8 shrink-0 flex justify-center">
-                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <Sparkles className="w-4 h-4 text-violet-400/80" />
                   </div>
                 </div>
               </div>
