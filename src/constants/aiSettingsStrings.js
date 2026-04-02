@@ -1,4 +1,4 @@
-export const AI_MODAL_COPY = {
+export const AI_SETTINGS_STRINGS = {
   alertTitle: 'Нужны настройки AI',
   alertBody: 'Чтобы запустить автоматический перевод, укажите API ключ и endpoint GitHub Models.',
   settingsTitle: 'Настройки приложения',

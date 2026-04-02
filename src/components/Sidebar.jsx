@@ -59,14 +59,22 @@ export default function Sidebar({ disabled, modData, translations, setTranslatio
   );
 }
 
+function SidebarFieldWrapper({ isFocused, value, isUnknown, children }) {
+  const hasValue = value.trim() !== '';
+  return (
+    <div className={`group relative -mx-3 p-3 rounded-xl transition-colors hover:bg-white/[0.02] ${isFocused ? 'bg-indigo-500/[0.03] ring-1 ring-indigo-500/20' : hasValue ? 'bg-emerald-500/[0.02] ring-1 ring-emerald-500/10' : isUnknown ? 'bg-orange-500/[0.02] ring-1 ring-orange-500/20' : ''}`}>
+      <div className={`absolute h-[calc(100%-16px)] w-[2px] left-[2px] top-[8px] rounded-full transition-all duration-300 ${isFocused ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : hasValue ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : isUnknown ? 'bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.4)]' : 'bg-white/5 group-hover:bg-indigo-400/40'}`}></div>
+      {children}
+    </div>
+  );
+}
+
 function DescriptionField({ original, value, onChange }) {
   const [isDescFocused, setIsDescFocused] = React.useState(false);
   const isUnknown = original?.includes('Unknown');
 
   return (
-    <div className={`group relative -mx-3 p-3 rounded-xl transition-colors hover:bg-white/[0.02] ${isDescFocused ? 'bg-indigo-500/[0.03] ring-1 ring-indigo-500/20' : value.trim() ? 'bg-emerald-500/[0.02] ring-1 ring-emerald-500/10' : isUnknown ? 'bg-orange-500/[0.02] ring-1 ring-orange-500/20' : ''}`}>
-      <div className={`absolute h-[calc(100%-16px)] w-[2px] left-[2px] top-[8px] rounded-full transition-all duration-300 ${isDescFocused ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : value.trim() ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : isUnknown ? 'bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.4)]' : 'bg-white/5 group-hover:bg-indigo-400/40'}`}></div>
-      
+    <SidebarFieldWrapper isFocused={isDescFocused} value={value} isUnknown={isUnknown}>
       <div className="mb-4">
         <label className={`block text-[10px] font-bold mb-2 uppercase tracking-widest transition-colors ml-3 ${isDescFocused ? 'text-zinc-400' : value.trim() ? 'text-emerald-500/80' : isUnknown ? 'text-orange-400/80' : 'text-zinc-500 group-hover:text-zinc-400'}`}>Оригинальный текст</label>
         <div className="ml-3">
@@ -91,7 +99,7 @@ function DescriptionField({ original, value, onChange }) {
           />
         </div>
       </div>
-    </div>
+    </SidebarFieldWrapper>
   );
 }
 
@@ -100,9 +108,7 @@ function InputField({ label, original, value, onChange, icon: Icon }) {
   const isUnknown = original?.includes('Unknown');
 
   return (
-    <div className={`group relative -mx-3 p-3 rounded-xl transition-colors duration-300 hover:bg-white/[0.02] ${isFocused ? 'bg-indigo-500/[0.03] ring-1 ring-indigo-500/20' : value.trim() ? 'bg-emerald-500/[0.02] ring-1 ring-emerald-500/10' : isUnknown ? 'bg-orange-500/[0.02] ring-1 ring-orange-500/20' : ''}`}>
-      <div className={`absolute h-[calc(100%-16px)] w-[2px] left-[2px] top-[8px] rounded-full transition-all duration-300 ${isFocused ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : value.trim() ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : isUnknown ? 'bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.4)]' : 'bg-white/5 group-hover:bg-indigo-400/40'}`}></div>
-      
+    <SidebarFieldWrapper isFocused={isFocused} value={value} isUnknown={isUnknown}>
       <div className="flex items-center justify-between mb-2 ml-3">
         <label className={`text-xs font-semibold transition-colors flex items-center gap-2 ${isFocused ? 'text-zinc-300' : value.trim() ? 'text-emerald-500/80' : isUnknown ? 'text-orange-400/80' : 'text-zinc-500 group-hover:text-zinc-400'}`}>
           {Icon && <Icon className="w-3.5 h-3.5" />}
@@ -129,6 +135,6 @@ function InputField({ label, original, value, onChange, icon: Icon }) {
           />
         </div>
       </div>
-    </div>
+    </SidebarFieldWrapper>
   );
 }

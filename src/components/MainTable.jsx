@@ -2,8 +2,9 @@ import React from 'react';
 import { Sparkles, FolderOpen, X, AlertCircle, Settings, Check } from 'lucide-react';
 import Topbar from './Topbar';
 import TranslationStatusBar from './TranslationStatusBar';
+import AiAlertModal from './AiAlertModal';
+import AiSettingsModal from './AiSettingsModal';
 import useAiTranslation from '../hooks/useAiTranslation';
-import { AI_MODAL_COPY } from '../constants/modalCopy';
 
 export default function MainTable({ disabled, originalStrings, translations, setTranslations, onOpenDLL }) {
   const {
@@ -50,125 +51,26 @@ export default function MainTable({ disabled, originalStrings, translations, set
         onSettingsOpen={() => setIsSettingsOpen(true)}
       />
 
-      {isAlertOpen && (
-        <div className="absolute inset-0 z-50 bg-[#09090b]/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#131316] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-600 to-indigo-500" />
+      <AiAlertModal
+        isOpen={isAlertOpen}
+        onClose={() => setIsAlertOpen(false)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
 
-            <div className="flex items-start gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center border border-red-500/20 shrink-0">
-                <AlertCircle className="w-5 h-5 text-red-300" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">{AI_MODAL_COPY.alertTitle}</h3>
-                <p className="text-sm text-zinc-400 mt-1 leading-relaxed">
-                  {AI_MODAL_COPY.alertBody}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsAlertOpen(false)}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                {AI_MODAL_COPY.closeButton}
-              </button>
-              <button
-                onClick={() => {
-                  setIsAlertOpen(false);
-                  setIsSettingsOpen(true);
-                }}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-lg"
-              >
-                {AI_MODAL_COPY.settingsButton}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isSettingsOpen && (
-        <div className="absolute inset-0 z-50 bg-[#09090b]/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#131316] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-600 to-indigo-500" />
-
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center border border-zinc-700">
-                <Settings className="w-5 h-5 text-zinc-300" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">{AI_MODAL_COPY.settingsTitle}</h3>
-                <p className="text-xs text-zinc-400 font-medium">{AI_MODAL_COPY.settingsSubtitle}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div>
-                <label className="block text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{AI_MODAL_COPY.endpointLabel}</label>
-                <input
-                  type="text"
-                  value={endpointUrl}
-                  onChange={(e) => setEndpointUrl(e.target.value)}
-                  className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-mono"
-                />
-                <p className="text-[10px] text-zinc-500 mt-2 font-medium">
-                  {AI_MODAL_COPY.endpointHint} <span className="text-zinc-300">https://models.github.ai/inference/chat/completions</span>
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{AI_MODAL_COPY.apiKeyLabel}</label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-mono"
-                  placeholder="sk-... или ghp_..."
-                />
-              </div>
-
-              {showModelSelector ? (
-                <div>
-                  <label className="block text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{AI_MODAL_COPY.modelLabel}</label>
-                  <select
-                    value={modelName}
-                    onChange={(e) => setModelName(e.target.value)}
-                    className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all"
-                  >
-                    <option value="gpt-4o-mini">GPT-4o mini</option>
-                    <option value="gpt-5-mini">GPT-5 mini</option>
-                  </select>
-                  <p className="text-[10px] text-zinc-500 mt-2 font-medium">{AI_MODAL_COPY.modelHint}</p>
-                  <p className="mt-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] leading-relaxed text-zinc-400">
-                    {modelHelp[normalizedModelName || 'gpt-4o-mini']}
-                  </p>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-3 text-[11px] text-zinc-500 leading-relaxed">
-                  {AI_MODAL_COPY.modelFallbackHint}
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsSettingsOpen(false)}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                {AI_MODAL_COPY.cancelButton}
-              </button>
-              <button
-                onClick={handleSaveSettings}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-lg active:scale-95"
-              >
-                <Check className="w-4 h-4" />
-                {AI_MODAL_COPY.saveButton}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AiSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        endpointUrl={endpointUrl}
+        setEndpointUrl={setEndpointUrl}
+        apiKey={apiKey}
+        setApiKey={setApiKey}
+        showModelSelector={showModelSelector}
+        modelName={modelName}
+        setModelName={setModelName}
+        modelHelp={modelHelp}
+        normalizedModelName={normalizedModelName}
+        onSave={handleSaveSettings}
+      />
 
       <TranslationStatusBar
         visible={isTranslating}

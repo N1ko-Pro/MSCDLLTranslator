@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import useTranslationProgress from './useTranslationProgress';
+import useAiSettings from './useAiSettings';
+import { AI_MODELS_HELP, AI_ERRORS } from '../constants/aiStrings';
 
 export default function useAiTranslation({ originalStrings, translations, setTranslations }) {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [endpointUrl, setEndpointUrl] = useState('https://models.github.ai/inference/chat/completions');
-  const [modelName, setModelName] = useState('gpt-4o-mini');
   const [aiError, setAiError] = useState('');
 
-  const normalizedModelName = modelName.replace(/^openai\//, '').trim();
+  const settings = useAiSettings();
 
   const {
     isTranslating,
@@ -19,11 +16,8 @@ export default function useAiTranslation({ originalStrings, translations, setTra
     applyProgress,
     finishProgress,
     failProgress,
-  } = useTranslationProgress(normalizedModelName || 'gpt-4o-mini');
+  } = useTranslationProgress();
 
-  const hasValidEndpoint = /^https?:\/\/\S+/i.test(endpointUrl.trim());
-  const hasApiKey = apiKey.trim().length > 0;
-  const showModelSelector = hasValidEndpoint && hasApiKey;
 
   const totalCount = originalStrings ? originalStrings.length : 0;
   const untranslatedRows = useMemo(
@@ -36,22 +30,7 @@ export default function useAiTranslation({ originalStrings, translations, setTra
     [translations]
   );
 
-  const modelHelp = {
-    'gpt-4o-mini': 'Более быстрая модель. Хороша для массовых переводов и коротких строк.',
-    'gpt-5-mini': 'Более умная модель. Лучше подходит для сложного контекста и тонких формулировок.'
-  };
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem('ai_api_key');
-    const savedEndpoint = localStorage.getItem('ai_endpoint_url');
-    const savedModel = localStorage.getItem('ai_model_name');
-
-    if (savedKey) setApiKey(savedKey);
-    if (savedEndpoint) setEndpointUrl(savedEndpoint);
-    if (savedModel) {
-      setModelName(savedModel.replace(/^openai\//, ''));
-    }
-  }, []);
+  const modelHelp = AI_MODELS_HELP;
 
   useEffect(() => {
     if (!window.electronAPI?.onTranslateAIProgress) return undefined;
@@ -61,7 +40,7 @@ export default function useAiTranslation({ originalStrings, translations, setTra
 
       if (payload.status === 'error') {
         failProgress();
-        setAiError(payload.error || 'Неизвестная ошибка от нейросети.');
+        setAiError(payload.error || AI_ERRORS.UNKNOWN);
         return;
       }
 
@@ -74,16 +53,9 @@ export default function useAiTranslation({ originalStrings, translations, setTra
     });
   }, [applyProgress, failProgress, finishProgress, setAiError]);
 
-  const handleSaveSettings = () => {
-    localStorage.setItem('ai_api_key', apiKey.trim());
-    localStorage.setItem('ai_endpoint_url', endpointUrl.trim());
-    localStorage.setItem('ai_model_name', normalizedModelName || 'gpt-4o-mini');
-    setIsSettingsOpen(false);
-  };
-
   const triggerAITranslation = async () => {
-    if (!apiKey.trim() || !endpointUrl.trim()) {
-      setIsAlertOpen(true);
+    if (!settings.apiKey.trim() || !settings.endpointUrl.trim()) {
+      settings.setIsAlertOpen(true);
       return;
     }
 
@@ -95,9 +67,9 @@ export default function useAiTranslation({ originalStrings, translations, setTra
       const stringsToTranslate = untranslatedRows.map((row) => row.original);
       const result = await window.electronAPI.translateAI({
         strings: stringsToTranslate,
-        apiKey: apiKey.trim(),
-        model: normalizedModelName || 'gpt-4o-mini',
-        endpointUrl: endpointUrl.trim()
+        apiKey: settings.apiKey.trim(),
+        model: settings.normalizedModelName || 'gpt-4o-mini',
+        endpointUrl: settings.endpointUrl.trim()
       });
 
       if (result && result.success) {
@@ -108,7 +80,7 @@ export default function useAiTranslation({ originalStrings, translations, setTra
         setTranslations(newTranslations);
       } else {
         failProgress();
-        setAiError(result?.error || 'Неизвестная ошибка от нейросети.');
+        setAiError(result?.error || AI_ERRORS.UNKNOWN);
       }
     } catch (err) {
       failProgress();
@@ -117,30 +89,10 @@ export default function useAiTranslation({ originalStrings, translations, setTra
   };
 
   return {
-    aiError,
-    apiKey,
-    endpointUrl,
-    hasApiKey,
-    hasValidEndpoint,
-    handleSaveSettings,
-    isAlertOpen,
-    isSettingsOpen,
-    isTranslating,
-    modelHelp,
-    modelName,
-    normalizedModelName,
-    setAiError,
-    setApiKey,
-    setEndpointUrl,
-    setIsAlertOpen,
-    setIsSettingsOpen,
-    setModelName,
-    showModelSelector,
-    totalCount,
-    translationEta,
-    translationProgress,
-    translationStage,
-    translatedCount,
-    triggerAITranslation,
+    ...settings,
+    aiError, setAiError,
+    isTranslating, translationProgress, translationStage, translationEta,
+    totalCount, untranslatedRows, translatedCount,
+    modelHelp, triggerAITranslation,
   };
 }

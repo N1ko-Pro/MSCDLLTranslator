@@ -1,57 +1,6 @@
-import fetch from 'node-fetch'; // В Node 18+ fetch уже встроен глобально, но оставим для совместимости или просто используем глобальный
-
-function getBatchSize(total) {
-  if (total <= 0) return 1;
-  if (total <= 8) return 1;
-  if (total <= 24) return 3;
-  if (total <= 60) return 5;
-  return 8;
-}
-
-function stripCodeFences(text) {
-  let result = (text || '').trim();
-
-  if (result.startsWith('```json')) {
-    result = result.replace(/^```json/i, '').replace(/```$/i, '').trim();
-  } else if (result.startsWith('```')) {
-    result = result.replace(/^```/i, '').replace(/```$/i, '').trim();
-  }
-
-  return result;
-}
-
-function normalizeLine(line) {
-  return line
-    .replace(/^\s*[-*•]\s*/, '')
-    .replace(/^\s*\d+[.)]\s*/, '')
-    .trim()
-    .replace(/^"(.*)"$/, '$1')
-    .replace(/^'(.*)'$/, '$1');
-}
-
-function parseTranslationPayload(rawText, expectedLength) {
-  const cleaned = stripCodeFences(rawText);
-
-  try {
-    const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed)) {
-      return parsed.map((item) => String(item));
-    }
-  } catch {
-    // fall through to line parsing
-  }
-
-  const lines = cleaned
-    .split(/\r?\n/)
-    .map(normalizeLine)
-    .filter((line) => line.length > 0);
-
-  if (lines.length > 0) {
-    return lines.slice(0, expectedLength);
-  }
-
-  throw new Error('Нейросеть вернула нечитаемый ответ.');
-}
+import fetch from 'node-fetch'; // В Node 18+ fetch уже встроен глобально, но оставим для совместимости
+import { AI_PROMPT, AI_ERRORS } from './aiConstants.js';
+import { getBatchSize, parseTranslationPayload } from './aiParser.js';
 
 export function createAiProgressReporter(sender, { model, endpointUrl, total }) {
   const send = (payload) => {
@@ -79,7 +28,7 @@ export function createAiProgressReporter(sender, { model, endpointUrl, total }) 
         progress: 0,
       });
     },
-    progress({ completed = 0, remaining, stage, eta, batchIndex, batchTotal }) {
+    progress({ completed = 0, remaining, batchIndex, batchTotal }) {
       const safeCompleted = Math.max(0, completed);
       const safeRemaining = Number.isFinite(remaining) ? remaining : Math.max(0, total - safeCompleted);
 
@@ -93,6 +42,7 @@ export function createAiProgressReporter(sender, { model, endpointUrl, total }) 
         batchTotal,
       });
     },
+
     done() {
       send({
         status: 'done',
@@ -116,15 +66,6 @@ export function createAiProgressReporter(sender, { model, endpointUrl, total }) 
 }
 
 export async function translateBatch(strings, apiKey, model = "gpt-4o-mini", endpointUrl = "https://models.github.ai/inference/chat/completions") {
-  const prompt = `Ты профессиональный переводчик модов для игры My Summer Car.
-Твоя задача — перевести список строк на русский язык.
-Правила:
-1. ОБЯЗАТЕЛЬНО сохраняй все Unity теги форматирования (например: <color=green>, <b>, \n). Не переводи и не удаляй их.
-2. ОБЯЗАТЕЛЬНО сохраняй переменные (например: {0}, {1}).
-3. ВЕРНИ ТОЛЬКО переводы, по одному переводу на строку, в том же самом порядке и того же размера.
-4. Никаких нумераций, маркеров, пояснений, markdown-разметки или лишнего текста.
-5. Если строка пустая или не требует перевода, верни её как есть.`;
-
   try {
     const response = await fetch(endpointUrl, {
       method: 'POST',
@@ -135,7 +76,7 @@ export async function translateBatch(strings, apiKey, model = "gpt-4o-mini", end
       body: JSON.stringify({
         model: model,
         messages: [
-          { role: 'system', content: prompt },
+          { role: 'system', content: AI_PROMPT },
           { role: 'user', content: JSON.stringify(strings) }
         ]
       })
@@ -148,7 +89,7 @@ export async function translateBatch(strings, apiKey, model = "gpt-4o-mini", end
     const translatedArray = parseTranslationPayload(translatedText, strings.length);
 
     if (!Array.isArray(translatedArray) || translatedArray.length !== strings.length) {
-      throw new Error(`Нейросеть вернула ${translatedArray.length} строк вместо ${strings.length}.`);
+      throw new Error(AI_ERRORS.LENGTH_MISMATCH(strings.length, translatedArray ? translatedArray.length : 0));
     }
 
     return { success: true, result: translatedArray };
@@ -159,8 +100,9 @@ export async function translateBatch(strings, apiKey, model = "gpt-4o-mini", end
 
 export async function translateBatchesWithProgress(strings, apiKey, model = 'gpt-4o-mini', endpointUrl = 'https://models.github.ai/inference/chat/completions', onProgress = null) {
   if (!Array.isArray(strings) || strings.length === 0) {
-    return { success: false, error: 'Нет текста для перевода.' };
+    return { success: false, error: AI_ERRORS.NO_TEXT };
   }
+
 
   const total = strings.length;
   const batchSize = getBatchSize(total);
