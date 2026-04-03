@@ -1,4 +1,4 @@
-import { AI_ERRORS } from './aiConstants.js';
+import { AI_ERRORS } from '../src/constants/aiConstants.js';
 
 export function getBatchSize(total) {
   if (total <= 0) return 1;

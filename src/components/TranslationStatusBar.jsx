@@ -9,7 +9,7 @@ export default function TranslationStatusBar({ visible, modelName, stage, eta, p
   const normalizedModelName = (modelName || 'gpt-4o-mini').replace(/^openai\//, '').trim();
   const modelLabel = {
     'gpt-4o-mini': 'GPT-4o mini',
-    'gpt-5-mini': 'GPT-5 mini',
+    'gpt-4o': 'GPT-4o',
   }[normalizedModelName] || normalizedModelName;
 
   return (

@@ -5,6 +5,7 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { createAiProgressReporter, translateBatchesWithProgress } from './ai.js'
 import { getProjects, loadProject, saveProject, deleteProject } from './projectManager.js'
+import { openDll } from './dllManager.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -65,59 +66,7 @@ ipcMain.on('window-close', () => {
   if (win) win.close()
 })
 
-ipcMain.handle('open-dll', async () => {
-  const { canceled, filePaths } = await dialog.showOpenDialog({
-    properties: ['openFile'],
-    filters: [{ name: 'DLL Files', extensions: ['dll'] }]
-  })
-  
-  if (canceled) return { success: false }
-
-  const filePath = filePaths[0]
-  try {
-    const parserPath = process.env.NODE_ENV === 'production' 
-       ? path.join(process.resourcesPath, 'backend', 'bin', 'DllParser.exe')
-       : path.join(__dirname, '..', 'backend', 'bin', 'DllParser.exe')
-
-    const { stdout, stderr } = await execFileAsync(parserPath, ['read', filePath])
-
-    if (stderr && stderr.trim()) {
-      console.warn("Backend WARNING:", stderr)
-    }
-
-    const { id, name, author, version, description, strings, error } = JSON.parse(stdout)
-    
-    if (error) {
-       return { success: false, error: error }
-    }
-
-    let parsedStrings = []
-    if (strings && Array.isArray(strings)) {
-        parsedStrings = strings.map((str, index) => ({
-            id: index + 1,
-            original: str
-        }))
-    }
-
-    return {
-      success: true,
-      data: {
-        modData: {
-          id: id || 'Unknown',
-          author: author || 'Unknown',
-          name: name || 'Unknown',
-          version: version || 'Unknown',
-          description: description || 'Unknown'
-        },
-        strings: parsedStrings,
-        filePath
-      }
-    }
-  } catch (err) {
-    console.error(err)
-    return { success: false, error: err.message }
-  }
-})
+ipcMain.handle('open-dll', openDll)
 
 ipcMain.handle('get-projects', async () => await getProjects())
 ipcMain.handle('load-project', async (_, id) => await loadProject(id))

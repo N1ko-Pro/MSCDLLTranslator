@@ -1,5 +1,5 @@
 import fetch from 'node-fetch'; // В Node 18+ fetch уже встроен глобально, но оставим для совместимости
-import { AI_PROMPT, AI_ERRORS } from './aiConstants.js';
+import { AI_PROMPT, AI_ERRORS } from '../src/constants/aiConstants.js';
 import { getBatchSize, parseTranslationPayload } from './aiParser.js';
 
 export function createAiProgressReporter(sender, { model, endpointUrl, total }) {
@@ -82,7 +82,21 @@ export async function translateBatch(strings, apiKey, model = "gpt-4o-mini", end
       })
     });
 
-    const data = await response.json();
+    const textData = await response.text();
+    let data;
+    try {
+      data = JSON.parse(textData);
+    } catch (e) {
+      if (!response.ok) {
+        throw new Error(`API Error (${response.status}): ${textData}`);
+      }
+      throw new Error(`Invalid JSON response: ${textData}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || data.error || `API Error (${response.status}): ${JSON.stringify(data)}`);
+    }
+
     if (data.error) throw new Error(data.error.message);
 
     const translatedText = data.choices[0].message.content;
@@ -114,10 +128,12 @@ export async function translateBatchesWithProgress(strings, apiKey, model = 'gpt
     const remainingBeforeBatch = total - completedBeforeBatch;
 
     if (typeof onProgress === 'function') {
+      const remainingBeforeBatch = total - index;
+      
       onProgress({
         status: 'progress',
         total,
-        completed: completedBeforeBatch,
+        completed: index,
         remaining: remainingBeforeBatch,
         batchIndex: Math.floor(index / batchSize) + 1,
         batchTotal: Math.ceil(total / batchSize),
@@ -130,20 +146,17 @@ export async function translateBatchesWithProgress(strings, apiKey, model = 'gpt
     }
 
     translated.push(...result.result);
+  }
 
-    const completed = Math.min(total, index + batch.length);
-    const remaining = total - completed;
-
-    if (typeof onProgress === 'function') {
-      onProgress({
-        status: 'progress',
-        total,
-        completed,
-        remaining,
-        batchIndex: Math.floor(index / batchSize) + 1,
-        batchTotal: Math.ceil(total / batchSize),
-      });
-    }
+  if (typeof onProgress === 'function') {
+    onProgress({
+      status: 'progress',
+      total,
+      completed: total,
+      remaining: 0,
+      batchIndex: Math.ceil(total / batchSize),
+      batchTotal: Math.ceil(total / batchSize),
+    });
   }
 
   return { success: true, result: translated };

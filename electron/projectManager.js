@@ -21,23 +21,23 @@ export async function getProjects() {
     const files = await fs.readdir(dir)
     const projects = []
     for (const file of files) {
-      if (file.endsWith('.json')) {
-         try {
-           const data = await fs.readFile(path.join(dir, file), 'utf-8')
-           const parsed = JSON.parse(data)
-           projects.push({
-             id: parsed.id,
-             projectName: parsed.projectName,
-             author: parsed.author,
-             modName: parsed.modData?.name || 'Unknown',
-             updatedAt: parsed.updatedAt
-           })
-         } catch (e) {
-           console.error("Error reading project file:", file, e)
-         }
+      if (!file.endsWith('.json')) continue
+
+      try {
+        const data = await fs.readFile(path.join(dir, file), 'utf-8')
+        const parsed = JSON.parse(data)
+        projects.push({
+          id: parsed.id,
+          projectName: parsed.projectName,
+          author: parsed.author,
+          modName: parsed.modData?.name || 'Unknown',
+          updatedAt: parsed.updatedAt
+        })
+      } catch (e) {
+        console.error("Error reading project file:", file, e)
       }
     }
-    return projects.sort((a,b) => b.updatedAt - a.updatedAt)
+    return projects.sort((a, b) => b.updatedAt - a.updatedAt)
   } catch {
     return []
   }
