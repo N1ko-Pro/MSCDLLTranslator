@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveProject: (data) => ipcRenderer.invoke('save-project', data),
   deleteProject: (id) => ipcRenderer.invoke('delete-project', id),
   translateAI: (data) => ipcRenderer.invoke('translate-ai', data),
+  pingAiLimits: (data) => ipcRenderer.invoke('ping-ai-limits', data),
   onTranslateAIProgress: (callback) => {
     const handler = (_, payload) => callback(payload);
     ipcRenderer.on('translate-ai-progress', handler);

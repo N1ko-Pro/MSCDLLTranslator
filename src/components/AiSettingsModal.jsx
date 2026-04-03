@@ -67,7 +67,7 @@ export default function AiSettingsModal({
                 className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all"
               >
                 <option value="gpt-4o-mini">GPT-4o mini</option>
-                <option value="gpt-4o">GPT-4o</option>
+                <option value="gpt-4.1">GPT-4.1</option>
               </select>
               <p className="text-[10px] text-zinc-500 mt-2 font-medium">{AI_SETTINGS_STRINGS.modelHint}</p>
               <p className="mt-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] leading-relaxed text-zinc-400">

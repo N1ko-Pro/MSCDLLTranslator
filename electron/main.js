@@ -3,7 +3,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { createAiProgressReporter, translateBatchesWithProgress } from './ai.js'
+import { createAiProgressReporter, pingAiLimits } from './ai.js'
+import { translateBatchesWithProgress } from './aiBatching.js'
 import { getProjects, loadProject, saveProject, deleteProject } from './projectManager.js'
 import { openDll } from './dllManager.js'
 
@@ -72,6 +73,10 @@ ipcMain.handle('get-projects', async () => await getProjects())
 ipcMain.handle('load-project', async (_, id) => await loadProject(id))
 ipcMain.handle('save-project', async (_, data) => await saveProject(data))
 ipcMain.handle('delete-project', async (_, id) => await deleteProject(id))
+
+ipcMain.handle('ping-ai-limits', async (event, { apiKey, model, endpointUrl }) => {
+  return await pingAiLimits(apiKey, model, endpointUrl);
+})
 
 ipcMain.handle('translate-ai', async (event, { strings, apiKey, model, endpointUrl }) => {
   if (!strings || strings.length === 0) return { success: false, error: 'Нет текста для перевода.' };

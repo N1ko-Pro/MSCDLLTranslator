@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const getInitialValue = (key, fallback) => {
   if (typeof window === 'undefined') return fallback;
@@ -16,6 +16,18 @@ export default function useAiSettings() {
     return saved.replace(/^openai\//, '');
   });
 
+  useEffect(() => {
+    const syncState = () => {
+      setApiKey(getInitialValue('ai_api_key', ''));
+      setEndpointUrl(getInitialValue('ai_endpoint_url', 'https://models.github.ai/inference/chat/completions'));
+      const saved = getInitialValue('ai_model_name', 'gpt-4o-mini');
+      setModelName(saved.replace(/^openai\//, ''));
+    };
+
+    window.addEventListener('ai-settings-changed', syncState);
+    return () => window.removeEventListener('ai-settings-changed', syncState);
+  }, []);
+
   const normalizedModelName = modelName.replace(/^openai\//, '').trim();
 
   const hasValidEndpoint = /^https?:\/\/\S+/i.test(endpointUrl.trim());
@@ -26,6 +38,7 @@ export default function useAiSettings() {
     localStorage.setItem('ai_api_key', apiKey.trim());
     localStorage.setItem('ai_endpoint_url', endpointUrl.trim());
     localStorage.setItem('ai_model_name', normalizedModelName || 'gpt-4o-mini');
+    window.dispatchEvent(new Event('ai-settings-changed'));
     setIsSettingsOpen(false);
   };
 

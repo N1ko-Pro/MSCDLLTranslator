@@ -112,52 +112,33 @@ export async function translateBatch(strings, apiKey, model = "gpt-4o-mini", end
   }
 }
 
-export async function translateBatchesWithProgress(strings, apiKey, model = 'gpt-4o-mini', endpointUrl = 'https://models.github.ai/inference/chat/completions', onProgress = null) {
-  if (!Array.isArray(strings) || strings.length === 0) {
-    return { success: false, error: AI_ERRORS.NO_TEXT };
-  }
-
-
-  const total = strings.length;
-  const batchSize = getBatchSize(total);
-  const translated = [];
-
-  for (let index = 0; index < strings.length; index += batchSize) {
-    const batch = strings.slice(index, index + batchSize);
-    const completedBeforeBatch = index;
-    const remainingBeforeBatch = total - completedBeforeBatch;
-
-    if (typeof onProgress === 'function') {
-      const remainingBeforeBatch = total - index;
-      
-      onProgress({
-        status: 'progress',
-        total,
-        completed: index,
-        remaining: remainingBeforeBatch,
-        batchIndex: Math.floor(index / batchSize) + 1,
-        batchTotal: Math.ceil(total / batchSize),
-      });
-    }
-
-    const result = await translateBatch(batch, apiKey, model, endpointUrl);
-    if (!result.success) {
-      return result;
-    }
-
-    translated.push(...result.result);
-  }
-
-  if (typeof onProgress === 'function') {
-    onProgress({
-      status: 'progress',
-      total,
-      completed: total,
-      remaining: 0,
-      batchIndex: Math.ceil(total / batchSize),
-      batchTotal: Math.ceil(total / batchSize),
+export async function pingAiLimits(apiKey, model = "gpt-4.1", endpointUrl = "https://models.github.ai/inference/chat/completions") {
+  if (!apiKey) return { success: false, error: 'No API key' };
+  try {
+    const response = await fetch(endpointUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: '1' }],
+        max_tokens: 1
+      })
     });
-  }
 
-  return { success: true, result: translated };
+    const requests = response.headers.get('x-ratelimit-remaining-requests');
+    const tokens = response.headers.get('x-ratelimit-remaining-tokens');
+
+    return {
+      success: true,
+      limits: {
+        requests: requests || 'Неизвестно',
+        tokens: tokens || 'Неизвестно'
+      }
+    };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
