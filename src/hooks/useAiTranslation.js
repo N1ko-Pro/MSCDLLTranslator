@@ -54,7 +54,7 @@ export default function useAiTranslation({ originalStrings, translations, setTra
   }, [applyProgress, failProgress, finishProgress, setAiError]);
 
   const triggerAITranslation = async () => {
-    if (!settings.apiKey.trim() || !settings.endpointUrl.trim()) {
+    if (!settings.hasApiKey) {
       settings.setIsAlertOpen(true);
       return;
     }
@@ -68,8 +68,7 @@ export default function useAiTranslation({ originalStrings, translations, setTra
       const result = await window.electronAPI.translateAI({
         strings: stringsToTranslate,
         apiKey: settings.apiKey.trim(),
-        model: settings.normalizedModelName || 'gpt-4o-mini',
-        endpointUrl: settings.endpointUrl.trim()
+        model: settings.normalizedModelName || 'gpt-4o-mini'
       });
 
       if (result && result.success) {

@@ -5,7 +5,8 @@ import { AI_SETTINGS_STRINGS } from '../constants/aiSettingsStrings';
 export default function AiAlertModal({
   isOpen,
   onClose,
-  onOpenSettings
+  onOpenSettings,
+  alertBody
 }) {
   if (!isOpen) return null;
 
@@ -21,7 +22,7 @@ export default function AiAlertModal({
           <div>
             <h3 className="text-lg font-bold text-white">{AI_SETTINGS_STRINGS.alertTitle}</h3>
             <p className="text-sm text-zinc-400 mt-1 leading-relaxed">
-              {AI_SETTINGS_STRINGS.alertBody}
+              {alertBody || AI_SETTINGS_STRINGS.alertBody}
             </p>
           </div>
         </div>

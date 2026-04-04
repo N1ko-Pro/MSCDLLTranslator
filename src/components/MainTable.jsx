@@ -11,8 +11,8 @@ export default function MainTable({ disabled, originalStrings, translations, set
 
   const {
     aiError,
-    apiKey,
-    endpointUrl,
+    githubApiKey,
+    openRouterApiKey,
     handleSaveSettings,
     isAlertOpen,
     isSettingsOpen,
@@ -21,12 +21,13 @@ export default function MainTable({ disabled, originalStrings, translations, set
     modelName,
     normalizedModelName,
     setAiError,
-    setApiKey,
-    setEndpointUrl,
+    setGithubApiKey,
+    setOpenRouterApiKey,
     setIsAlertOpen,
     setIsSettingsOpen,
     setModelName,
     showModelSelector,
+    getAlertMessage,
     totalCount,
     translationEta,
     translationProgress,
@@ -79,15 +80,16 @@ export default function MainTable({ disabled, originalStrings, translations, set
         isOpen={isAlertOpen}
         onClose={() => setIsAlertOpen(false)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        alertBody={typeof getAlertMessage === 'function' ? getAlertMessage() : undefined}
       />
 
       <AiSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        endpointUrl={endpointUrl}
-        setEndpointUrl={setEndpointUrl}
-        apiKey={apiKey}
-        setApiKey={setApiKey}
+        githubApiKey={githubApiKey}
+        setGithubApiKey={setGithubApiKey}
+        openRouterApiKey={openRouterApiKey}
+        setOpenRouterApiKey={setOpenRouterApiKey}
         showModelSelector={showModelSelector}
         modelName={modelName}
         setModelName={setModelName}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Minus, Square, X, ChevronDown, Save, FolderOpen } from 'lucide-react';
 
-export default function CustomTitlebar({ currentProject, onSaveProject, onCloseProject }) {
+export default function CustomTitlebar({ currentProject, hasUnsavedChanges, onSaveProject, onCloseProject }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -41,9 +41,16 @@ export default function CustomTitlebar({ currentProject, onSaveProject, onCloseP
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className={`flex items-center gap-2 px-3 py-1 rounded-md transition-colors border ${isMenuOpen ? 'bg-indigo-500/20 border-indigo-500/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
               >
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Проект</span>
+                <div className="relative flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Проект</span>
+                  {hasUnsavedChanges && (
+                    <div className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-rose-500 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse"></div>
+                  )}
+                </div>
                 <div className="w-1 h-1 rounded-full bg-indigo-500/50"></div>
-                <span className="text-[11px] font-bold text-indigo-300 tracking-wider uppercase leading-none">{currentProject.projectName}</span>
+                <span className={`text-[11px] font-bold tracking-wider uppercase leading-none transition-colors ${hasUnsavedChanges ? 'text-rose-300' : 'text-indigo-300'}`}>
+                  {currentProject.projectName}
+                </span>
                 <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 ml-1 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
               </button>
             </div>

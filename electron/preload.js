@@ -12,6 +12,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteProject: (id) => ipcRenderer.invoke('delete-project', id),
   translateAI: (data) => ipcRenderer.invoke('translate-ai', data),
   pingAiLimits: (data) => ipcRenderer.invoke('ping-ai-limits', data),
+  forceCloseApp: () => ipcRenderer.send('force-close-app'),
+  onRequestAppClose: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('request-app-close', handler);
+    return () => {
+      ipcRenderer.removeListener('request-app-close', handler);
+    };
+  },
   onTranslateAIProgress: (callback) => {
     const handler = (_, payload) => callback(payload);
     ipcRenderer.on('translate-ai-progress', handler);

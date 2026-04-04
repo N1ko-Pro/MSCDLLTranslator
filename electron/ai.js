@@ -1,6 +1,8 @@
-import fetch from 'node-fetch'; // В Node 18+ fetch уже встроен глобально, но оставим для совместимости
+import fetch from 'node-fetch';
 import { AI_PROMPT, AI_ERRORS } from '../src/constants/aiConstants.js';
-import { getBatchSize, parseTranslationPayload } from './aiParser.js';
+import { getBatchSize } from './aiParser.js';
+import { translateBatchGithub, pingGithubLimits } from './githubApi.js';
+import { translateBatchOpenRouter, pingOpenRouterLimits } from './openRouterApi.js';
 
 export function createAiProgressReporter(sender, { model, endpointUrl, total }) {
   const send = (payload) => {
@@ -28,7 +30,7 @@ export function createAiProgressReporter(sender, { model, endpointUrl, total }) 
         progress: 0,
       });
     },
-    progress({ completed = 0, remaining, batchIndex, batchTotal }) {
+    progress({ completed = 0, remaining, batchIndex, batchTotal, limits }) {
       const safeCompleted = Math.max(0, completed);
       const safeRemaining = Number.isFinite(remaining) ? remaining : Math.max(0, total - safeCompleted);
 
@@ -40,9 +42,9 @@ export function createAiProgressReporter(sender, { model, endpointUrl, total }) 
         progress: getProgress(safeCompleted),
         batchIndex,
         batchTotal,
+        limits,
       });
     },
-
     done() {
       send({
         status: 'done',
@@ -65,80 +67,18 @@ export function createAiProgressReporter(sender, { model, endpointUrl, total }) 
   };
 }
 
-export async function translateBatch(strings, apiKey, model = "gpt-4o-mini", endpointUrl = "https://models.github.ai/inference/chat/completions") {
-  try {
-    const response = await fetch(endpointUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          { role: 'system', content: AI_PROMPT },
-          { role: 'user', content: JSON.stringify(strings) }
-        ]
-      })
-    });
-
-    const textData = await response.text();
-    let data;
-    try {
-      data = JSON.parse(textData);
-    } catch (e) {
-      if (!response.ok) {
-        throw new Error(`API Error (${response.status}): ${textData}`);
-      }
-      throw new Error(`Invalid JSON response: ${textData}`);
-    }
-
-    if (!response.ok) {
-      throw new Error(data.error?.message || data.error || `API Error (${response.status}): ${JSON.stringify(data)}`);
-    }
-
-    if (data.error) throw new Error(data.error.message);
-
-    const translatedText = data.choices[0].message.content;
-    const translatedArray = parseTranslationPayload(translatedText, strings.length);
-
-    if (!Array.isArray(translatedArray) || translatedArray.length !== strings.length) {
-      throw new Error(AI_ERRORS.LENGTH_MISMATCH(strings.length, translatedArray ? translatedArray.length : 0));
-    }
-
-    return { success: true, result: translatedArray };
-  } catch (err) {
-    return { success: false, error: err.message };
+export async function translateBatch(strings, apiKey, model) {
+  if (model === 'openrouter/auto') {
+    return await translateBatchOpenRouter(strings, apiKey);
+  } else {
+    return await translateBatchGithub(strings, apiKey, model);
   }
 }
 
-export async function pingAiLimits(apiKey, model = "gpt-4.1", endpointUrl = "https://models.github.ai/inference/chat/completions") {
-  if (!apiKey) return { success: false, error: 'No API key' };
-  try {
-    const response = await fetch(endpointUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [{ role: 'user', content: '1' }],
-        max_tokens: 1
-      })
-    });
-
-    const requests = response.headers.get('x-ratelimit-remaining-requests');
-    const tokens = response.headers.get('x-ratelimit-remaining-tokens');
-
-    return {
-      success: true,
-      limits: {
-        requests: requests || 'Неизвестно',
-        tokens: tokens || 'Неизвестно'
-      }
-    };
-  } catch (err) {
-    return { success: false, error: err.message };
+export async function pingAiLimits(apiKey, model) {
+  if (model === 'openrouter/auto') {
+    return await pingOpenRouterLimits(apiKey);
+  } else {
+    return await pingGithubLimits(apiKey, model);
   }
 }

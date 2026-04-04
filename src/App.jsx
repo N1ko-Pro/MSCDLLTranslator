@@ -19,6 +19,8 @@ function App() {
   const saveTimeoutRef = useRef(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [exitActionTarget, setExitActionTarget] = useState(null); // 'app' or 'project'
   const [modData, setModData] = useState({ id: '', author: '', name: '', version: '', description: '' });
   const [modDataTranslations, setModDataTranslations] = useState({});
   const [originalStrings, setOriginalStrings] = useState([]);
@@ -118,6 +120,7 @@ function App() {
     setTranslations(project.translations.strings || {});
     setModDataTranslations(project.translations.meta || {});
     setIsLoaded(true);
+    setHasUnsavedChanges(false);
   };
 
   const handleDeleteProject = async (id) => {
@@ -145,6 +148,7 @@ function App() {
       try {
         const saved = await window.electronAPI.saveProject(updatedProject);
         setCurrentProject(saved);
+        setHasUnsavedChanges(false);
         if (isManual) {
           notify.success(...notificationMessages.project.saved, 2500);
         }
@@ -156,22 +160,65 @@ function App() {
     }
   };
 
-  const debouncedSave = () => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      saveWorkspace(false);
-    }, 1000);
-  };
-
-  // Trigger save directly whenever translations change
+  // User asked for explicit manual saving via CTR+S, 
+  // so we won't trigger network saves automatically on typing anymore.
   const handleChangeTranslations = (newTrans) => {
     setTranslations(newTrans);
-    debouncedSave();
+    setHasUnsavedChanges(true);
   };
 
   const handleChangeModDataTrans = (newMeta) => {
     setModDataTranslations(newMeta);
-    debouncedSave();
+    setHasUnsavedChanges(true);
+  };
+
+  // Keyboard shortcut Ctrl+S
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Используем e.code === 'KeyS' чтобы комбинация работала на любой языковой раскладке (включая русскую "Ы")
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 's' || e.code === 'KeyS' || e.key.toLowerCase() === 'ы')) {
+        e.preventDefault();
+        if (hasUnsavedChanges && currentProject) {
+          saveWorkspace(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasUnsavedChanges, currentProject, translations, modDataTranslations]); // Need dependencies to capture latest translation state!
+
+  // Close logic interception with unsaved changes
+  useEffect(() => {
+    if (!window.electronAPI?.onRequestAppClose) return;
+    
+    // When the main process tries to close the window
+    return window.electronAPI.onRequestAppClose(() => {
+      setHasUnsavedChanges((unsaved) => {
+        if (unsaved) {
+          setExitActionTarget('app');
+        } else {
+          window.electronAPI.forceCloseApp();
+        }
+        return unsaved;
+      });
+    });
+  }, []);
+  
+  const processExitAction = async (save) => {
+    if (save) {
+      await saveWorkspace(false);
+    }
+    
+    if (exitActionTarget === 'app') {
+      if(window.electronAPI) window.electronAPI.forceCloseApp();
+    } else if (exitActionTarget === 'project') {
+      setCurrentProject(null);
+      loadProjects();
+      notify.info(...notificationMessages.project.closed);
+      setHasUnsavedChanges(false);
+    }
+    
+    setExitActionTarget(null);
   };
 
 
@@ -179,8 +226,15 @@ function App() {
     <div className="flex flex-col h-screen w-full bg-[#0f0f13] overflow-hidden text-gray-200 antialiased font-sans">
       <CustomTitlebar
         currentProject={currentProject}
+        hasUnsavedChanges={hasUnsavedChanges}
         onSaveProject={() => saveWorkspace(true)}
-        onCloseProject={() => { setCurrentProject(null); loadProjects(); notify.info(...notificationMessages.project.closed); }}
+        onCloseProject={() => { 
+          if(hasUnsavedChanges) {
+             setExitActionTarget('project');
+          } else {
+             setCurrentProject(null); loadProjects(); notify.info(...notificationMessages.project.closed); setHasUnsavedChanges(false);
+          }
+        }}
       />
       <div className="flex flex-1 min-h-0 relative">
         {!currentProject ? (
@@ -223,6 +277,38 @@ function App() {
           initialData={editingProject}
           onSave={handleSaveProjectInfo}
         />
+      )}
+
+      {exitActionTarget && (
+        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#18181b] border border-white/10 rounded-xl p-6 w-full max-w-md shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+            <h2 className="text-xl font-bold text-white mb-2">Несохранённые изменения</h2>
+            <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
+              В проекте <span className="text-indigo-400 font-semibold">{currentProject?.projectName}</span> остались несохранённые данные. 
+              <br/>Если вы выйдете прямо сейчас, они будут потеряны.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setExitActionTarget(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white transition-colors"
+              >
+                Отмена
+              </button>
+              <button 
+                onClick={() => processExitAction(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+              >
+                Не сохранять
+              </button>
+              <button 
+                onClick={() => processExitAction(true)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md transition-colors"
+              >
+                Сохранить и {exitActionTarget === 'app' ? 'выйти' : 'закрыть проект'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <NotificationContainer />

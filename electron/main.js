@@ -17,10 +17,11 @@ process.env.DIST = path.join(__dirname, '../dist')
 process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(process.env.DIST, '../public')
 
 let win
+let isForceClosing = false;
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1400,
+    width: 1500,
     height: 1220,
     minWidth: 900,
     minHeight: 700,
@@ -31,6 +32,13 @@ function createWindow() {
     },
     autoHideMenuBar: true,
   })
+
+  win.on('close', (e) => {
+    if (!isForceClosing) {
+      e.preventDefault();
+      win.webContents.send('request-app-close');
+    }
+  });
 
   if (process.env.VITE_DEV_SERVER_URL) {
     win.loadURL(process.env.VITE_DEV_SERVER_URL)
@@ -64,8 +72,13 @@ ipcMain.on('window-maximize', () => {
 })
 
 ipcMain.on('window-close', () => {
-  if (win) win.close()
+  if (win) win.webContents.send('request-app-close');
 })
+
+ipcMain.on('force-close-app', () => {
+  isForceClosing = true;
+  if (win) win.close();
+});
 
 ipcMain.handle('open-dll', openDll)
 

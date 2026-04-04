@@ -1,15 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Play, X, Cpu, Zap, ChevronDown, Check, HelpCircle } from 'lucide-react';
 import { useAIPanelLogic } from '../hooks/useAIPanelLogic.js';
+import { AI_MODELS } from '../constants/aiConstants.js';
+import useAiSettings from '../hooks/useAiSettings.js';
 
 export default function AIPanelButton({ onAIOpen, disableAI }) {
-  const { isPanelOpen, handleOpenPanel, handleClosePanel, handleStart, modelName, handleChangeModel, limits } = useAIPanelLogic(onAIOpen);
+  const { isPanelOpen, handleOpenPanel, handleClosePanel, handleStart, modelName, handleChangeModel, limits, hasApiKey, setIsPanelOpen } = useAIPanelLogic(onAIOpen);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const settings = useAiSettings();
 
   if (disableAI) return null;
 
-  const isUnlimited = Number(limits.requests) > 10000 || Number(limits.tokens) > 1000000;
+  const isUnlimited = (parseInt(limits.requests) > 10000) || (parseInt(limits.tokens) > 1000000);
 
   // Закрытие контекстного меню по клику вне его области
   useEffect(() => {
@@ -23,11 +26,6 @@ export default function AIPanelButton({ onAIOpen, disableAI }) {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isDropdownOpen]);
-
-  const models = [
-    { id: 'gpt-4o-mini', label: 'GPT-4o mini' },
-    { id: 'gpt-4.1', label: 'GPT-4.1' }
-  ];
 
   const handleSelectModel = (id) => {
     handleChangeModel(id);
@@ -61,14 +59,14 @@ export default function AIPanelButton({ onAIOpen, disableAI }) {
               <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-fuchsia-300' : ''}`} />
             </span>
             <span className="text-fuchsia-100 font-medium tracking-wide leading-none group-hover/model:text-white transition-colors">
-              {models.find(m => m.id === modelName)?.label || modelName || 'Не выбрана'}
+              {AI_MODELS.find(m => m.id === modelName)?.label || modelName || 'Не выбрана'}
             </span>
           </div>
 
           {/* Context Menu for Models */}
           {isDropdownOpen && (
             <div className="absolute top-[calc(100%+12px)] left-0 min-w-[160px] bg-[#1a1a24]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-              {models.map(m => (
+              {AI_MODELS.map(m => (
                 <button
                   key={m.id}
                   onClick={(e) => {
@@ -99,8 +97,8 @@ export default function AIPanelButton({ onAIOpen, disableAI }) {
             <div className="flex items-center gap-1 group/tooltip relative cursor-help w-max">
               <span className="text-[10px] uppercase font-semibold text-zinc-500 tracking-wider">Лимит (RPM / TPM)</span>
               <HelpCircle className="w-3 h-3 text-zinc-600 group-hover/tooltip:text-zinc-300 transition-colors" />
-              
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 min-w-[220px] p-3 bg-zinc-900/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl opacity-0 group-hover/tooltip:opacity-100 group-hover/tooltip:translate-y-1 pointer-events-none transition-all duration-200 z-[9999] text-[10px] text-zinc-400 normal-case font-medium whitespace-normal leading-relaxed text-left">
+
+              <div className="absolute top-full right-0 mt-6 min-w-[240px] p-3 bg-zinc-900/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl opacity-0 group-hover/tooltip:opacity-100 group-hover/tooltip:translate-y-1 pointer-events-none transition-all duration-200 z-[9999] text-[10px] text-zinc-400 normal-case font-medium whitespace-normal leading-relaxed text-left">
                 <span className="text-amber-300 font-bold block mb-0.5 mt-0 text-xs">RPM (Requests per min)</span>
                 Сколько запросов подряд вы можете сделать к серверам ИИ.
                 <div className="h-px bg-white/10 w-full my-2"></div>
@@ -108,17 +106,25 @@ export default function AIPanelButton({ onAIOpen, disableAI }) {
                 Максимальный объем текста, который ИИ может обработать в рамках этих запросов за 1 минуту.
               </div>
             </div>
-            
-            <div className="font-medium tracking-wide mt-0.5">
+
+            <div className="font-medium tracking-wide mt-0.5 whitespace-nowrap">
               {limits.loading ? (
                  <span className="text-zinc-400 animate-pulse">Проверка...</span>
+              ) : limits.requests === 'Ошибка' ? (
+                 <span className="text-red-400 inline-block text-[11px]" title={limits.tokens}>ОШИБКА: {limits.tokens}</span>
               ) : isUnlimited ? (
-                 <span className="text-emerald-400">Безлимит (Pro)</span>
+                   <span className="text-zinc-200 flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
+                      <span className="text-emerald-400 font-bold" title="Безлимит (Pro)">PRO</span>
+                      <span className="text-zinc-600 text-[10px]">|</span>
+                      <span className="text-amber-300 inline-block text-[11px]" title={limits.requests || 'N/A'}>{limits.requests || 'N/A'}</span>
+                      <span className="text-zinc-600 text-[10px]">-</span>
+                      <span className="text-sky-300 inline-block text-[10px]" title={limits.tokens || '?'}>{limits.tokens || '?'}</span>
+                   </span>
               ) : (
-                 <span className="text-zinc-200 flex items-center gap-1.5">
-                    <span className="text-amber-300">{limits.requests || '?'}</span>
+                 <span className="text-zinc-200 flex items-center gap-1.5 flex-nowrap whitespace-nowrap text-ellipsis">
+                    <span className="text-amber-300 inline-block" title={limits.requests || '?'}>{limits.requests || '?'}</span>
                     <span className="text-zinc-600 text-[10px]">|</span>
-                    <span className="text-sky-300">{limits.tokens || '?'}</span>
+                    <span className="text-sky-300 inline-block" title={limits.tokens || '?'}>{limits.tokens || '?'}</span>
                  </span>
               )}
             </div>
@@ -147,13 +153,28 @@ export default function AIPanelButton({ onAIOpen, disableAI }) {
         {isPanelOpen && (
           <div className="flex items-center justify-between gap-1 w-[220px] animate-in fade-in zoom-in-95 duration-200 h-full relative z-10">
             <button
-              onClick={handleStart}
-              className="group/start relative flex-1 flex items-center justify-center gap-2 h-full px-3 rounded-lg overflow-hidden transition-all duration-300 hover:bg-emerald-500/10 hover:border-emerald-500/20"
-            >
-              <Play className="relative z-10 w-3.5 h-3.5 fill-emerald-300/80 group-hover/start:fill-emerald-300 group-hover/start:scale-110 group-hover/start:translate-x-0.5 transition-all duration-300" />
-              <span className="relative z-10 text-xs font-bold text-emerald-300">Начать</span>
+                onClick={() => {
+                  if (!settings.hasApiKey) {
+                    settings.setIsAlertOpen(true);
+                    return;
+                  }
+                  handleStart();
+                }}
+                className={`group/start relative flex-1 flex items-center justify-center gap-2 h-full px-3 rounded-lg overflow-hidden transition-all duration-300 ${
+                  settings.hasApiKey 
+                    ? 'hover:bg-emerald-500/10 hover:border-emerald-500/20' 
+                    : 'opacity-50 grayscale hover:bg-zinc-500/10 cursor-pointer'
+                }`}
+              >
+                <Play className={`relative z-10 w-3.5 h-3.5 transition-all duration-300 ${
+                  settings.hasApiKey
+                    ? 'fill-emerald-300/80 group-hover/start:fill-emerald-300 group-hover/start:scale-110 group-hover/start:translate-x-0.5'
+                    : 'fill-zinc-400 group-hover/start:fill-zinc-300'
+                }`} />
+                <span className={`relative z-10 text-xs font-bold ${
+                  settings.hasApiKey ? 'text-emerald-300' : 'text-zinc-400'
+                }`}>Начать</span>
             </button>
-
             <button
               onClick={handleClosePanel}
               className="group/cancel relative flex-1 flex items-center justify-center gap-2 h-full px-3 rounded-lg overflow-hidden transition-all duration-300 hover:bg-rose-500/10 hover:border-rose-500/20"

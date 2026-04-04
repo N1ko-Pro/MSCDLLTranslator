@@ -1,14 +1,15 @@
 import React from 'react';
 import { Settings, Check } from 'lucide-react';
 import { AI_SETTINGS_STRINGS } from '../constants/aiSettingsStrings';
+import { AI_MODELS } from '../constants/aiConstants';
 
 export default function AiSettingsModal({
   isOpen,
   onClose,
-  endpointUrl,
-  setEndpointUrl,
-  apiKey,
-  setApiKey,
+  githubApiKey,
+  setGithubApiKey,
+  openRouterApiKey,
+  setOpenRouterApiKey,
   showModelSelector,
   modelName,
   setModelName,
@@ -35,26 +36,24 @@ export default function AiSettingsModal({
 
         <div className="space-y-4 mb-8">
           <div>
-            <label className="block text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{AI_SETTINGS_STRINGS.endpointLabel}</label>
+            <label className="block text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{AI_SETTINGS_STRINGS.githubKeyLabel}</label>
             <input
-              type="text"
-              value={endpointUrl}
-              onChange={(e) => setEndpointUrl(e.target.value)}
-              className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-mono"
+              type="password"
+              value={githubApiKey}
+              onChange={(e) => setGithubApiKey(e.target.value)}
+              className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-mono"
+              placeholder="ghp_..."
             />
-            <p className="text-[10px] text-zinc-500 mt-2 font-medium">
-              {AI_SETTINGS_STRINGS.endpointHint} <span className="text-zinc-300">https://models.github.ai/inference/chat/completions</span>
-            </p>
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{AI_SETTINGS_STRINGS.apiKeyLabel}</label>
+            <label className="block text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{AI_SETTINGS_STRINGS.openRouterKeyLabel}</label>
             <input
               type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              value={openRouterApiKey}
+              onChange={(e) => setOpenRouterApiKey(e.target.value)}
               className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-mono"
-              placeholder="sk-... или ghp_..."
+              placeholder="sk-or-v1-..."
             />
           </div>
 
@@ -66,12 +65,13 @@ export default function AiSettingsModal({
                 onChange={(e) => setModelName(e.target.value)}
                 className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all"
               >
-                <option value="gpt-4o-mini">GPT-4o mini</option>
-                <option value="gpt-4.1">GPT-4.1</option>
+                {AI_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>{m.label}</option>
+                ))}
               </select>
               <p className="text-[10px] text-zinc-500 mt-2 font-medium">{AI_SETTINGS_STRINGS.modelHint}</p>
-              <p className="mt-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] leading-relaxed text-zinc-400">
-                {modelHelp[normalizedModelName || 'gpt-4o-mini']}
+                <p className="mt-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] leading-relaxed text-zinc-400 whitespace-pre-wrap">
+                {modelHelp?.[normalizedModelName] || 'Выберите модель для перевода.'}
               </p>
             </div>
           ) : (

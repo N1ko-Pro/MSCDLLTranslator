@@ -1,16 +1,16 @@
 import React from 'react';
 import { Bot } from 'lucide-react';
+import { AI_MODELS } from '../constants/aiConstants';
 
 export default function TranslationStatusBar({ visible, modelName, stage, eta, progress }) {
   if (!visible) return null;
 
   const safeProgress = Math.max(0, Math.min(100, progress ?? 0));
-  const stageLabel = stage || `Модель ${modelName || 'gpt-4o-mini'} переводит строки`;
-  const normalizedModelName = (modelName || 'gpt-4o-mini').replace(/^openai\//, '').trim();
-  const modelLabel = {
-    'gpt-4o-mini': 'GPT-4o mini',
-    'gpt-4.1': 'GPT-4.1',
-  }[normalizedModelName] || normalizedModelName;
+  const fallbackModel = 'openai/gpt-4o-mini';
+  const currentModel = modelName || fallbackModel;
+  const modelObj = AI_MODELS.find(m => m.id === currentModel);
+  const modelLabel = modelObj ? modelObj.label : currentModel;
+  const stageLabel = stage || `Модель ${modelLabel} переводит строки`;
 
   return (
     <div className="absolute top-0 left-0 right-0 z-50 bg-white/[0.03] backdrop-blur-2xl border-b border-white/10 h-20 flex items-center justify-between px-8 shadow-2xl animate-[slideInFromTop_0.5s_cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden">
