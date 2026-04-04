@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Play, X, Cpu, Zap, ChevronDown, Check, HelpCircle } from 'lucide-react';
-import { useAIPanelLogic } from '../hooks/useAIPanelLogic.js';
-import { AI_MODELS } from '../constants/aiConstants.js';
-import useAiSettings from '../hooks/useAiSettings.js';
+import { useAIPanelLogic } from '../../hooks/useAIPanelLogic.js';
+import { AI_MODELS } from '../../constants/aiConstants.js';
+import useAiSettings from '../../hooks/useAiSettings.js';
 
 export default function AIPanelButton({ onAIOpen, disableAI }) {
   const { isPanelOpen, handleOpenPanel, handleClosePanel, handleStart, modelName, handleChangeModel, limits, hasApiKey, setIsPanelOpen } = useAIPanelLogic(onAIOpen);

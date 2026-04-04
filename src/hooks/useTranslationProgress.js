@@ -1,27 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AI_STAGES, AI_ETA } from '../constants/aiStrings';
-
-function formatProgressCopy(remaining, total, done = false) {
-  const safeRemaining = Math.max(0, remaining || 0);
-  const safeTotal = Math.max(0, total || 0);
-
-  if (done || safeRemaining === 0) {
-    return {
-      stage: AI_STAGES.FINAL_CHECK,
-      eta: AI_ETA.DONE,
-    };
-  }
-
-  const ratio = safeTotal > 0 ? safeRemaining / safeTotal : 0;
-  let stage = AI_STAGES.GATHERING;
-
-  if (ratio > 0.80) stage = AI_STAGES.PREPARING;
-  else if (ratio > 0.60) stage = AI_STAGES.STARTING;
-  else if (ratio > 0.40) stage = AI_STAGES.TRANSLATING;
-  else if (ratio > 0.20) stage = AI_STAGES.FINISHING;
-
-  return { stage, eta: AI_ETA.REMAINING(safeRemaining) };
-}
+import { formatProgressCopy } from '../utils/aiUtils';
 
 export default function useTranslationProgress() {
   const [isTranslating, setIsTranslating] = useState(false);

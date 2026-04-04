@@ -1,6 +1,6 @@
 import React from 'react';
 import { DownloadCloud, UploadCloud, Settings } from 'lucide-react';
-import AIPanelButton from './AIPanelButton.jsx';
+import AIPanelButton from '../ai/AIPanelButton';
 
 export default function Topbar({ onAIOpen, disableAI, onSettingsOpen }) {
   return (

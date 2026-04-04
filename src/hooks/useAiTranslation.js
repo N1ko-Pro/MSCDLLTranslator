@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import useTranslationProgress from './useTranslationProgress';
 import useAiSettings from './useAiSettings';
 import { AI_MODELS_HELP, AI_ERRORS } from '../constants/aiStrings';
@@ -53,7 +53,7 @@ export default function useAiTranslation({ originalStrings, translations, setTra
     });
   }, [applyProgress, failProgress, finishProgress, setAiError]);
 
-  const triggerAITranslation = async () => {
+  const triggerAITranslation = useCallback(async () => {
     if (!settings.hasApiKey) {
       settings.setIsAlertOpen(true);
       return;
@@ -67,7 +67,7 @@ export default function useAiTranslation({ originalStrings, translations, setTra
       const stringsToTranslate = untranslatedRows.map((row) => row.original);
       const result = await window.electronAPI.translateAI({
         strings: stringsToTranslate,
-        apiKey: settings.apiKey.trim(),
+        apiKey: settings.apiKey,
         model: settings.normalizedModelName || 'gpt-4o-mini'
       });
 
@@ -85,7 +85,7 @@ export default function useAiTranslation({ originalStrings, translations, setTra
       failProgress();
       setAiError(err.message);
     }
-  };
+  }, [settings, untranslatedRows, translations, setTranslations, failProgress]);
 
   return {
     ...settings,

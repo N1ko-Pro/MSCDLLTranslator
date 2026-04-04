@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bot } from 'lucide-react';
-import { AI_MODELS } from '../constants/aiConstants';
+import { AI_MODELS } from '../../constants/aiConstants';
 
 export default function TranslationStatusBar({ visible, modelName, stage, eta, progress }) {
   if (!visible) return null;

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Sparkles, X, AlertCircle, Settings, Check, Trash2, Search } from 'lucide-react';
-import Topbar from './Topbar';
-import TranslationStatusBar from './TranslationStatusBar';
-import AiAlertModal from './AiAlertModal';
-import AiSettingsModal from './AiSettingsModal';
-import useAiTranslation from '../hooks/useAiTranslation';
+import Topbar from '../layout/Topbar';
+import TranslationStatusBar from '../layout/TranslationStatusBar';
+import AiAlertModal from '../ai/AiAlertModal';
+import AiSettingsModal from '../ai/AiSettingsModal';
+import useAiTranslation from '../../hooks/useAiTranslation';
 
 export default function MainTable({ disabled, originalStrings, translations, setTranslations }) {
   const [searchQuery, setSearchQuery] = useState('');

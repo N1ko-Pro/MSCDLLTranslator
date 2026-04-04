@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
-import { AI_SETTINGS_STRINGS } from '../constants/aiSettingsStrings';
+import { AI_SETTINGS_STRINGS } from '../../constants/aiSettingsStrings';
 
 export default function AiAlertModal({
   isOpen,

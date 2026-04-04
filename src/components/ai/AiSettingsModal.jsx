@@ -1,7 +1,7 @@
 import React from 'react';
 import { Settings, Check } from 'lucide-react';
-import { AI_SETTINGS_STRINGS } from '../constants/aiSettingsStrings';
-import { AI_MODELS } from '../constants/aiConstants';
+import { AI_SETTINGS_STRINGS } from '../../constants/aiSettingsStrings';
+import { AI_MODELS } from '../../constants/aiConstants';
 
 export default function AiSettingsModal({
   isOpen,

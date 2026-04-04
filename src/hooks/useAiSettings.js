@@ -1,10 +1,5 @@
-import { useState, useEffect } from 'react';
-
-const getInitialValue = (key, fallback) => {
-  if (typeof window === 'undefined') return fallback;
-  const saved = localStorage.getItem(key);
-  return saved || fallback;
-};
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { getInitialValue, isValidGithubKey, isValidOpenRouterKey } from '../utils/aiUtils';
 
 export default function useAiSettings() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -26,33 +21,34 @@ export default function useAiSettings() {
     return () => window.removeEventListener('ai-settings-changed', syncState);
   }, []);
 
-  const normalizedModelName = modelName.trim();
+  const normalizedModelName = useMemo(() => modelName.trim(), [modelName]);
+  const isGithubKeyValid = useMemo(() => isValidGithubKey(githubApiKey), [githubApiKey]);
+  const isOpenRouterKeyValid = useMemo(() => isValidOpenRouterKey(openRouterApiKey), [openRouterApiKey]);
 
-  const isValidGithubKey = /^(gh[pousr]_|github_pat_)[a-zA-Z0-9_.-]{20,}$/.test(githubApiKey.trim());
-  const isValidOpenRouterKey = /^sk-or-v1-[a-zA-Z0-9_.-]{30,}$/.test(openRouterApiKey.trim());
+  const apiKey = useMemo(() => 
+    normalizedModelName.includes('openrouter') ? openRouterApiKey.trim() : githubApiKey.trim(),
+    [normalizedModelName, openRouterApiKey, githubApiKey]
+  );
+  const hasApiKey = normalizedModelName.includes('openrouter') ? isOpenRouterKeyValid : isGithubKeyValid;
+  const showModelSelector = isGithubKeyValid || isOpenRouterKeyValid;
 
-  const apiKey = normalizedModelName.includes('openrouter') ? openRouterApiKey.trim() : githubApiKey.trim();
-
-  const hasApiKey = normalizedModelName.includes('openrouter') ? isValidOpenRouterKey : isValidGithubKey;
-  const showModelSelector = isValidGithubKey || isValidOpenRouterKey;
-
-  const getAlertMessage = () => {
-    if (normalizedModelName.includes('openrouter') && !isValidOpenRouterKey) {
+  const getAlertMessage = useCallback(() => {
+    if (normalizedModelName.includes('openrouter') && !isOpenRouterKeyValid) {
       return 'Для запуска перевода через эту модель, укажите корректный API Ключ OpenRouter (начинается с sk-or-v1-) в настройках.';
     }
-    if (!normalizedModelName.includes('openrouter') && !isValidGithubKey) {
+    if (!normalizedModelName.includes('openrouter') && !isGithubKeyValid) {
       return 'Для запуска перевода через эту модель, укажите корректный API Ключ GitHub (начинается с ghp_ или github_pat_) в настройках.';
     }
     return null;
-  };
+  }, [normalizedModelName, isOpenRouterKeyValid, isGithubKeyValid]);
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = useCallback(() => {
     localStorage.setItem('ai_github_api_key', githubApiKey.trim());
     localStorage.setItem('ai_openrouter_api_key', openRouterApiKey.trim());
     localStorage.setItem('ai_model_name', normalizedModelName || 'gpt-4o-mini');
     window.dispatchEvent(new Event('ai-settings-changed'));
     setIsSettingsOpen(false);
-  };
+  }, [githubApiKey, openRouterApiKey, normalizedModelName]);
 
   return {
     isSettingsOpen, setIsSettingsOpen,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FolderPlus, FileText, Trash2, Edit3, Sparkles } from 'lucide-react';
-import DeleteProjectModal from './DeleteProjectModal';
+import DeleteProjectModal from '../modals/DeleteProjectModal';
 
 export default function HomeView({ projects, onCreateProject, onLoadProject, onDeleteProject, onEditProject }) {
   const [projectToDelete, setProjectToDelete] = useState(null);
