@@ -1,31 +1,37 @@
-import { contextBridge, ipcRenderer } from 'electron'
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  minimizeWindow: () => ipcRenderer.send('window-minimize'),
-  maximizeWindow: () => ipcRenderer.send('window-maximize'),
-  closeWindow: () => ipcRenderer.send('window-close'),
-  openDll: () => ipcRenderer.invoke('open-dll'),
-  saveDll: (data) => ipcRenderer.invoke('save-dll', data),
-  getProjects: () => ipcRenderer.invoke('get-projects'),
-  loadProject: (id) => ipcRenderer.invoke('load-project', id),
-  saveProject: (data) => ipcRenderer.invoke('save-project', data),
-  deleteProject: (id) => ipcRenderer.invoke('delete-project', id),
-  translateAI: (data) => ipcRenderer.invoke('translate-ai', data),
-  pingAiLimits: (data) => ipcRenderer.invoke('ping-ai-limits', data),
-  forceCloseApp: () => ipcRenderer.send('force-close-app'),
-  onRequestAppClose: (callback) => {
-    const handler = () => callback();
-    ipcRenderer.on('request-app-close', handler);
-    return () => {
-      ipcRenderer.removeListener('request-app-close', handler);
-    };
+  // Window controls
+  minimize: () => ipcRenderer.send('window-min'),
+  maximize: () => ipcRenderer.send('window-max'),
+  close: () => ipcRenderer.send('window-close'),
+  onOsClose: (callback) => {
+    ipcRenderer.on('os-window-close', callback);
+    return () => ipcRenderer.removeListener('os-window-close', callback);
   },
-  onTranslateAIProgress: (callback) => {
-    const handler = (_, payload) => callback(payload);
-    ipcRenderer.on('translate-ai-progress', handler);
 
-    return () => {
-      ipcRenderer.removeListener('translate-ai-progress', handler);
-    };
-  }
-})
+  // BG3 Workflow
+  selectAndUnpackPak: () => ipcRenderer.invoke('select-and-unpack-pak'),
+  translateStrings: (dataToTranslate, targetLang, options = {}) => ipcRenderer.invoke('translate-strings', {
+    dataToTranslate,
+    targetLang,
+    options,
+  }),
+  repackMod: (updatedData) => ipcRenderer.invoke('repack-mod', { updatedData }),
+  saveProject: (projectData) => ipcRenderer.invoke('save-project', projectData),
+  loadProjects: () => ipcRenderer.invoke('load-projects'),
+  deleteProject: (id) => ipcRenderer.invoke('delete-project', id),
+  loadProject: (projectId) => ipcRenderer.invoke('load-project', projectId),
+  
+  // XML Import/Export
+  exportXml: (translations, modInfo) => ipcRenderer.invoke('export-xml', translations, modInfo),
+  importXml: () => ipcRenderer.invoke('import-xml'),
+
+  // Settings
+  setTranslationMethod: (method) => ipcRenderer.invoke('set-translation-method', method),
+  setTranslationSettings: (settingsPatch) => ipcRenderer.invoke('set-translation-settings', settingsPatch),
+  setTranslationProxyPool: (proxyPool) => ipcRenderer.invoke('set-translation-proxy-pool', proxyPool),
+  setTranslationProxyConfig: (proxyConfig) => ipcRenderer.invoke('set-translation-proxy-config', proxyConfig),
+  clearTranslationProxyPool: () => ipcRenderer.invoke('clear-translation-proxy-pool'),
+  getTranslationSettings: () => ipcRenderer.invoke('get-translation-settings')
+});

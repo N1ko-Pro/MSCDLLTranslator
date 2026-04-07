@@ -28,3 +28,6 @@ backend/DllParser/obj/
 *.njsproj
 *.sln
 *.sw?
+
+workspace/
+electron/config/translatorProxy.json

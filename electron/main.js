@@ -1,52 +1,73 @@
-import { app, BrowserWindow } from 'electron'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { setupIpcHandlers, getIsForceClosing } from './ipcHandlers.js'
+const { app, BrowserWindow } = require('electron');
+const path = require('path');
+const { registerAllHandlers } = require('./ipc');
+const bg3Manager = require('./manager/bg3Manager');
+const smartManager = require('./manager/smartManager');
+const projectManager = require('./manager/projectManager');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// Suppress security warnings for local dev server (Content-Security-Policy)
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
-// The built directory structure
-process.env.DIST = path.join(__dirname, '../dist')
-process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(process.env.DIST, '../public')
+// Disable DirectComposition to avoid AMD VideoProcessorGetOutputExtension issues on some integrated GPUs.
+app.commandLine.appendSwitch('disable-direct-composition');
 
-let win
+// Suppress the punycode deprecation warning globally
+process.noDeprecation = true;
+const originalEmitWarning = process.emitWarning;
+process.emitWarning = function (warning, ...args) {
+  if (typeof warning === 'string' && warning.includes('punycode')) return;
+  return originalEmitWarning.call(process, warning, ...args);
+};
+
+let mainWindow;
+
+function getUserDataPath() {
+  return app.getPath('userData');
+}
 
 function createWindow() {
-  win = new BrowserWindow({
-    width: 1500,
-    height: 1220,
-    minWidth: 900,
-    minHeight: 700,
-    frame: false,
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 1200,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      sandbox: false
+      nodeIntegration: false,
+      contextIsolation: true,
     },
-    autoHideMenuBar: true,
-  })
-
-  win.on('close', (e) => {
-    if (!getIsForceClosing()) {
-      e.preventDefault();
-      win.webContents.send('request-app-close');
-    }
+    frame: false,
+    backgroundColor: '#0f0f13',
   });
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL)
+  mainWindow.on('close', (e) => {
+    if (app.isQuitting) return;
+    e.preventDefault();
+    mainWindow.webContents.send('os-window-close');
+  });
+
+  if (app.isPackaged) {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   } else {
-    win.loadFile(path.join(process.env.DIST, 'index.html'))
+    mainWindow.loadURL('http://localhost:5173');
   }
 }
 
+app.whenReady().then(() => {
+  smartManager.initializeSettingsStore(getUserDataPath());
+  createWindow();
+
+  registerAllHandlers({
+    app,
+    mainWindow,
+    getUserDataPath,
+    services: { bg3Manager, smartManager, projectManager },
+  });
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-})
+  if (process.platform !== 'darwin') app.quit();
+});
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow()
-})
-
-setupIpcHandlers()
-
-app.whenReady().then(createWindow)

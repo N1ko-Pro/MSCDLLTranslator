@@ -1,16 +1,64 @@
-# React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# BG3 Mod Translator
 
-Currently, two official plugins are available:
+**BG3 Mod Translator** — это современный визуальный редактор и автоматический переводчик модификаций для Baldur’s Gate 3. Проект создан для удобного локализаторского и моддерского опыта: вы можете быстро импортировать .pak-файлы, видеть все строки в красивой таблице, мгновенно переводить их с помощью ИИ, а затем экспортировать обратно в формат игры.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🚀 Возможности
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- ⚡ **Импорт и экспорт модов**: поддержка .pak, .xml, .loca файлов Baldur’s Gate 3.
+- 📝 **Удобная таблица переводов**: оригинал и перевод рядом, быстрый поиск, фильтрация, подсветка совпадений.
+- 🤖 **Автоматический перевод**: интеграция с Google Translate и другими сервисами, пакетная обработка, защита от потери структуры.
+- 💾 **Безопасное сохранение**: система отслеживания несохранённых изменений, защита от потери данных.
+- 🧩 **Проверка целостности**: валидация обязательных полей, подсветка ошибок, рекомендации по UUID.
+- 🎨 **Современный интерфейс**: тёмная тема, плавные анимации, кастомный titlebar, адаптивный дизайн.
+- 🛠️ **Горячие клавиши**: поддержка Ctrl+S (сохранить), Ctrl+X (вырезать), Ctrl+Z (вернуть), Ctrl+F (поиск).
+- 🗂️ **История проектов**: быстрый доступ к последним переводам, автосохранение.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Как начать
+
+1. **Склонируйте репозиторий:**
+	```sh
+	git clone https://github.com/yourname/bg3-mod-translator.git
+	cd bg3-mod-translator
+	```
+
+2. **Установите зависимости:**
+	```sh
+	npm install
+	```
+
+3. **Запустите приложение:**
+	```sh
+	npm run dev
+	```
+
+4. **Импортируйте мод (.pak) и начните перевод!**
+
+---
+
+## 🖼️ Скриншоты
+
+> _Добавьте сюда красивые скриншоты интерфейса, чтобы показать преимущества программы._
+
+---
+
+## 🎯 Для кого этот проект
+
+- Локализаторы и переводчики модов BG3
+- Авторы модификаций, желающие быстро добавить поддержку русского языка
+- Все, кто ценит удобство, скорость и безопасность работы с текстами
+
+---
+
+## 📬 Обратная связь и поддержка
+
+Если вы нашли баг или хотите предложить улучшение — создайте Issue или Pull Request.
+Контакты для связи: [пока пусто...]
+
+---
+
+**BG3 Mod Translator** — делаем перевод модов удобным, быстрым и красивым!
